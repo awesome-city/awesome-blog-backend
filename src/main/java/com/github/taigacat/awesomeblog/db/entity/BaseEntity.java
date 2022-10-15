@@ -1,37 +1,28 @@
 package com.github.taigacat.awesomeblog.db.entity;
 
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbIgnore;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey;
 
 @DynamoDbBean
-public abstract class ObjectEntity {
+public abstract class BaseEntity {
 
-	public ObjectEntity() {
+	public BaseEntity() {
 	}
 
 	public String createHashKey(String... kv) {
 		if (kv.length % 2 != 0) {
 			throw new IllegalArgumentException("argument length must be even.");
 		}
-		StringBuilder sb = new StringBuilder();
-		sb.append(createKeyValuePair("tableName", this.tableName()));
-		for (int i = 0; i + 1 < kv.length; i = i + 2) {
-			sb.append(createKeyValuePair(kv[i], kv[i + 1]));
-		}
-		return sb.toString();
+		return createKeyValuePair("tableName", this.tableName())
+				+ createKayValuePairAll(kv);
 	}
 
 	public String createRangeKey(String... kv) {
 		if (kv.length % 2 != 0) {
 			throw new IllegalArgumentException("argument length must be even.");
 		}
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i + 1 < kv.length; i = i + 2) {
-			sb.append(createKeyValuePair(kv[i], kv[i + 1]));
-		}
-		return sb.toString();
+		return createKayValuePairAll(kv);
 	}
 
 	protected abstract String tableName();
@@ -52,6 +43,14 @@ public abstract class ObjectEntity {
 
 	public Integer getTtl() {
 		return null;
+	}
+
+	private String createKayValuePairAll(String... kv) {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i + 1 < kv.length; i = i + 2) {
+			sb.append(createKeyValuePair(kv[i], kv[i + 1]));
+		}
+		return sb.toString();
 	}
 
 	private String createKeyValuePair(String key, String value) {

@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ObjectEntityTest {
 
-	static class ObjectEntityExample extends ObjectEntity {
+	static class ObjectEntityExample extends BaseEntity {
 
 		@Override
 		protected String tableName() {

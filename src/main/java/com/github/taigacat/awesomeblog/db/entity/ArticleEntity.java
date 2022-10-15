@@ -7,7 +7,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 @DynamoDbBean
 @Getter
 @Setter
-public class ArticleEntity extends ObjectEntity {
+public class ArticleEntity extends BaseEntity {
 
 	private String id;
 	private String title;
