@@ -1,0 +1,17 @@
+name: Auto Test
+on:
+  pull_request:
+    branches:
+      - master
+      - release
+      - develop
+  push:
+    branches:
+      - '**'
+      - '!master'
+      - '!release'
+      - '!develop'
+
+jobs:
+  test:
+    uses: ./.github/workflows/@test.yaml

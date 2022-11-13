@@ -1,0 +1,36 @@
+name: Deploy
+on:
+  push:
+    branches:
+      - master
+      - release
+      - develop
+
+jobs:
+  test:
+    uses: ./.github/workflows/@test.yaml
+
+  build:
+    needs:
+      - test
+    uses: ./.github/workflows/@build.yaml
+
+  deploy-dev:
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    container:
+      image: amazon/aws-cli
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: awesome-blog-client
+
+      - name: Create function.zip
+        run: |
+          mv awesome-blog-server bootstrap
+          zip function.zip boostrap
+
+      - name: CloudFormation
+        run: echo TODO cfn
