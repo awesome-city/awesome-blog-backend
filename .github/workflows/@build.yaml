@@ -4,8 +4,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
-    uses:
   build:
     runs-on: ubuntu-latest
     container:
