@@ -1,12 +1,16 @@
-name: Deploy
+name: Build artifacts
 on:
   push:
     branches:
-      - master
-      - release
-      - develop
+      - main
 
 jobs:
+  dependency-review:
+    uses: ./.github/workflows/_dependency-review.yml
+
+  codeQL:
+    uses: ./.github/workflows/_codeql.yaml
+
   test:
     uses: ./.github/workflows/_test.yaml
 
