@@ -1,13 +1,10 @@
-name: Build artifacts
+name: Build on push main
 on:
   push:
     branches:
       - main
 
 jobs:
-  dependency-review:
-    uses: ./.github/workflows/_dependency-review.yaml
-
   codeQL:
     uses: ./.github/workflows/_codeql.yaml
 
