@@ -35,7 +35,7 @@ jobs:
       uses: actions/checkout@v3
 
     - uses: actions/setup-java@v1
-      if: matrix.landuage == 'java'
+      if: matrix.language == 'java'
       with:
         java-version: 17
 
