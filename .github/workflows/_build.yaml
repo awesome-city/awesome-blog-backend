@@ -76,7 +76,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: awesome-blog-backend-java${{ inputs.java-version }}-${{ inputs.graalvm-version }}
+          name: awesome-blog-backend-${{ inputs.packaging }}-java${{ inputs.java-version }}-${{ inputs.graalvm-version }}
           path: ./target/awesome-blog-server*
           retention-days: 1
 
@@ -92,7 +92,7 @@ jobs:
       - name: Download Artifacts
         uses: actions/download-artifact@v3
         with:
-          name: awesome-blog-backend-java${{ inputs.java-version }}-${{ inputs.graalvm-version }}
+          name: awesome-blog-backend-${{ inputs.packaging }}-java${{ inputs.java-version }}-${{ inputs.graalvm-version }}
           path: ./awesome-blog-backend
 
       - name: Rename Artifact

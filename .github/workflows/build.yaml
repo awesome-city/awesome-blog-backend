@@ -36,6 +36,7 @@ jobs:
       java-version: ${{ matrix.java-version }}
       graalvm-version: ${{ matrix.graalvm-version }}
       stable: java17-22
+    secrets: inherit
 
   tag:
     needs:
