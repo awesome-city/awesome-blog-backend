@@ -1,0 +1,37 @@
+name: Build on push main
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  codeQL:
+    uses: ./.github/workflows/_codeql.yaml
+
+  test:
+    uses: ./.github/workflows/_test.yaml
+
+  build:
+    needs:
+      - test
+    uses: ./.github/workflows/_build.yaml
+
+  tag:
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    outputs:
+      build-version: ${{ steps.Tag.outputs.build-version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.OWNER_PAT }}
+
+      - id: Tag
+        name: Push Tag
+        run: |
+          echo ${{ needs.build.outputs.build-version}}
+          git tag ${{ needs.build.outputs.build-version}}
+          git push origin ${{ needs.build.outputs.build-version}}
+          echo "build-version=${{ needs.build.outputs.build-version}}" >> "$GITHUB_OUTPUT"

@@ -1,9 +1,17 @@
 name: Test
 on:
   workflow_call:
-  workflow_dispatch:
 
 jobs:
+  lint-action:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Lint
+        uses: reviewdog/action-actionlint@v1
+
   test:
     runs-on: ubuntu-latest
     container:

@@ -1,9 +1,30 @@
 name: Build
 on:
   workflow_call:
-  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: to prevent upload artifacts, set '1'
+        required: false
+        type: boolean
+        default: false
+    outputs:
+      artifact-name:
+        description: Name of artifact to upload
+        value: awesome-blog-backend
+      build-version:
+        description: build date
+        value: ${{ jobs.build-version.outputs.build-version }}
 
 jobs:
+  build-version:
+    runs-on: ubuntu-latest
+    outputs:
+      build-version: ${{ steps.BuildVersion.outputs.build-version }}
+    steps:
+      - id: BuildVersion
+        name: BuildVersion
+        run: echo "build-version=v$(date +"%Y%m%d%H%M")" >> "$GITHUB_OUTPUT"
+
   build:
     runs-on: ubuntu-latest
     container:
@@ -17,13 +38,50 @@ jobs:
           path: .m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
 
-      - name: Maven Install
+      - name: Maven Package
         run: |
           chmod +x ./mvnw
           ./mvnw package -Dpackaging=native-image -Dmicronaut.runtime=lambda -Pgraalvm
 
+      - name: Rename Artifact
+        run: mv ./target/awesome-blog-server bootstrap
+
+      - name: Zip lambda
+        run: zip -rj function.zip bootstrap
+
       - name: Upload Artifact
+        if: inputs.dry-run != true
         uses: actions/upload-artifact@v3
         with:
           name: awesome-blog-backend
-          path: target/awesome-blog-server*
+          path: function.zip
+
+  upload:
+    if: inputs.dry-run != true
+    needs:
+      - build
+      - build-version
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: awesome-blog-backend
+          path: ./awesome-blog-backend
+
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOYMENT_ROLE_ARN }}
+          aws-region: ap-northeast-1
+
+      - id: Upload
+        name: Upload
+        run: |
+          echo ${{ needs.build-version.outputs.build-version}}
+          aws s3 cp \
+          ./awesome-blog-backend/ \
+          s3://awesome-blog-an1-dev-mdl/artifact/blog/backend/${{ needs.build-version.outputs.build-version}}/ \
+          --recursive
