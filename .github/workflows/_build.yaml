@@ -7,28 +7,34 @@ on:
         required: false
         type: boolean
         default: false
+      build-version:
+        description: build date
+        required: false
+        type: string
+        default: noversion
+      java-version:
+        description: builder container name
+        required: false
+        type: string
+        default: 17
+      graalvm-version:
+        description: builder container name
+        required: false
+        type: string
+        default: 22
     outputs:
       artifact-name:
         description: Name of artifact to upload
         value: awesome-blog-backend
       build-version:
         description: build date
-        value: ${{ jobs.build-version.outputs.build-version }}
+        value: ${{ inputs.build-version }}
 
 jobs:
-  build-version:
-    runs-on: ubuntu-latest
-    outputs:
-      build-version: ${{ steps.BuildVersion.outputs.build-version }}
-    steps:
-      - id: BuildVersion
-        name: BuildVersion
-        run: echo "build-version=v$(date +"%Y%m%d%H%M")" >> "$GITHUB_OUTPUT"
-
   build:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/graalvm/graalvm-ce:ol8-java17-22
+      image: ghcr.io/graalvm/graalvm-ce:ol9-java${{ inputs.java-version }}-${{ inputs.graalvm-version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -46,44 +52,14 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: awesome-blog-backend
+          name: awesome-blog-backend-java${{ inputs.java-version }}-${{ inputs.graalvm-version }}
           path: ./target/awesome-blog-server*
           retention-days: 1
-
-  zip:
-    if: inputs.dry-run != true
-    needs:
-      - build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download Artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: awesome-blog-backend
-          path: ./awesome-blog-backend
-
-      - name: Rename Artifact
-        run: |
-          ls ./awesome-blog-backend
-          ls ./awesome-blog-backend/target
-          mv ./awesome-blog-backend/target/awesome-blog-server bootstrap
-
-      - name: Zip lambda
-        run: zip -rj function.zip bootstrap
-
-      - name: Upload Artifact
-        if: inputs.dry-run != true
-        uses: actions/upload-artifact@v3
-        with:
-          name: awesome-blog-backend
-          path: function.zip
-          retention-days: 7
 
   upload:
     if: inputs.dry-run != true
     needs:
-      - zip
-      - build-version
+      - build
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -92,8 +68,14 @@ jobs:
       - name: Download Artifacts
         uses: actions/download-artifact@v3
         with:
-          name: awesome-blog-backend
+          name: awesome-blog-backend-java${{ inputs.java-version }}-${{ inputs.graalvm-version }}
           path: ./awesome-blog-backend
+
+      - name: Rename Artifact
+        run: mv ./awesome-blog-backend/awesome-blog-server bootstrap
+
+      - name: Zip lambda
+        run: zip -rj function.zip bootstrap
 
       - uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -103,8 +85,7 @@ jobs:
       - id: Upload
         name: Upload
         run: |
-          echo ${{ needs.build-version.outputs.build-version}}
+          echo ${{ inputs.build-version}}
           aws s3 cp \
-          ./awesome-blog-backend/ \
-          s3://awesome-blog-an1-dev-mdl/artifact/blog/backend/${{ needs.build-version.outputs.build-version}}/ \
-          --recursive
+          function.zip \
+          s3://awesome-blog-an1-dev-mdl/artifact/blog/backend/${{ inputs.build-version}}/java${{ inputs.java-version }}-${{ inputs.graalvm-version }}/

@@ -11,10 +11,28 @@ jobs:
   test:
     uses: ./.github/workflows/_test.yaml
 
+  build-version:
+    runs-on: ubuntu-latest
+    outputs:
+      build-version: ${{ steps.BuildVersion.outputs.build-version }}
+    steps:
+      - id: BuildVersion
+        name: BuildVersion
+        run: echo "build-version=v$(date +"%Y%m%d%H%M")" >> "$GITHUB_OUTPUT"
+
   build:
     needs:
       - test
+      - build-version
+    strategy:
+      matrix:
+        java-version: [11, 17]
+        graalvm-version: [22]
     uses: ./.github/workflows/_build.yaml
+    with:
+      build-version: ${{ needs.build-version.outputs.build-version }}
+      java-version: ${{ matrix.java-version }}
+      graalvm-version: ${{ matrix.graalvm-version }}
 
   tag:
     needs:
