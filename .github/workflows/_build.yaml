@@ -43,8 +43,30 @@ jobs:
           chmod +x ./mvnw
           ./mvnw package -Dpackaging=native-image -Dmicronaut.runtime=lambda -Pgraalvm
 
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: awesome-blog-backend
+          path: ./target/awesome-blog-server*
+          retention-days: 1
+
+  zip:
+    if: inputs.dry-run != true
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: awesome-blog-backend
+          path: ./awesome-blog-backend
+
       - name: Rename Artifact
-        run: mv ./target/awesome-blog-server bootstrap
+        run: |
+          ls ./awesome-blog-backend
+          ls ./awesome-blog-backend/target
+          mv ./awesome-blog-backend/target/awesome-blog-server bootstrap
 
       - name: Zip lambda
         run: zip -rj function.zip bootstrap
@@ -55,11 +77,12 @@ jobs:
         with:
           name: awesome-blog-backend
           path: function.zip
+          retention-days: 7
 
   upload:
     if: inputs.dry-run != true
     needs:
-      - build
+      - zip
       - build-version
     runs-on: ubuntu-latest
     permissions:
