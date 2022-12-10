@@ -70,7 +70,7 @@ jobs:
         run: |
           chmod +x ./mvnw
           ./mvnw package -Dpackaging=${{ inputs.packaging }} -Dmicronaut.runtime=lambda -Pgraalvm
-        with:
+        env:
           AWS_REGION: ap-northeast-1
 
       - name: Upload Artifact
@@ -81,7 +81,7 @@ jobs:
           retention-days: 1
 
   upload:
-    if: inputs.dry-run != true && needs.build.outputs.version == inputs.stable && packaging == 'native-image'
+    if: inputs.dry-run != true && needs.build.outputs.version == inputs.stable && inputs.packaging == 'native-image'
     needs:
       - build
     runs-on: ubuntu-latest
