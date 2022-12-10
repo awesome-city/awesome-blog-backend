@@ -12,6 +12,11 @@ on:
         required: false
         type: string
         default: noversion
+      packaging:
+        description: package target
+        required: false
+        type: string
+        default: native-image
       java-version:
         description: builder container name
         required: false
@@ -44,10 +49,15 @@ jobs:
           path: .m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
 
+      - name: Replace java version
+        run: |
+          sed -i -e "s/<jdk.version>17<\/jdk.version>/<jdk.version>${{ inputs.java-version }}<\/jdk.version>/g" pom.xml
+          sed -i -e "s/<release.version>17<\/release.version>/<release.version>${{ inputs.java-version }}<\/release.version>/g" pom.xml
+
       - name: Maven Package
         run: |
           chmod +x ./mvnw
-          ./mvnw package -Dpackaging=native-image -Dmicronaut.runtime=lambda -Pgraalvm
+          ./mvnw package -Dpackaging=${{ inputs.packaging }} -Dmicronaut.runtime=lambda -Pgraalvm
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
