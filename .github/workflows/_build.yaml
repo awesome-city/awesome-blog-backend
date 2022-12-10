@@ -28,10 +28,10 @@ on:
         type: string
         default: 22
       stable:
-        description: builder container name
+        description: stable version
         required: false
         type: string
-        default: java
+        default: java17-22
     outputs:
       artifact-name:
         description: Name of artifact to upload

@@ -1,3 +1,6 @@
 micronaut:
   application:
     name: awesomeBlogServer
+
+dynamodb:
+  object-table-name: 'awesome-blog-dev-object-table'

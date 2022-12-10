@@ -1,0 +1,66 @@
+openapi: 3.0.0
+info:
+  title: awesome-blog-backend
+  description: API Specification for awesome-blog-backend
+  version: 1.0.0
+
+servers:
+  - url: https://example.com/api/v1
+
+paths:
+  /articles:
+    get:
+      summary: Retrieve article list
+      responses:
+        200:
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetArticlesResponse'
+
+components:
+  schemas:
+    ####################
+    # Request/Response #
+    ####################
+    PagingResponse:
+      description: Common response for paging
+      type: object
+      properties:
+        nextPageToken:
+          $ref: '#/components/schemas/NextPageToken'
+
+    GetArticlesResponse:
+      description: GET /articles response
+      type: object
+      allOf:
+        - properties:
+            articles:
+              type: array
+              items:
+                $ref: '#/components/schemas/Article'
+        - $ref: '#/components/schemas/PagingResponse'
+
+    ####################
+    #      Entity      #
+    ####################
+    Article:
+      type: object
+      description: Article entity
+      properties:
+        id:
+          $ref: '#/components/schemas/ArticleId'
+
+    ArticleId:
+      type: string
+      description: Article ID
+      example: 1
+
+    ####################
+    #      Common      #
+    ####################
+    NextPageToken:
+      type: string
+      description: Token for retrieve next page
+      example: '{"hashkey": "hoge", "rangekey": "fuga"}'

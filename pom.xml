@@ -114,6 +114,12 @@
             <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>com.github.ksuid</groupId>
+            <artifactId>ksuid</artifactId>
+            <version>1.1.1</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <build>
