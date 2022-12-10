@@ -35,6 +35,7 @@ jobs:
       packaging: ${{ matrix.packaging }}
       java-version: ${{ matrix.java-version }}
       graalvm-version: ${{ matrix.graalvm-version }}
+      stable: java17-22
 
   tag:
     needs:
