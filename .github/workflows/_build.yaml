@@ -66,16 +66,18 @@ jobs:
         with:
           path: .m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-
-      - name: Replace java version
-        run: |
-          sed -i -e "s/<jdk.version>17<\/jdk.version>/<jdk.version>${{ inputs.java-version }}<\/jdk.version>/g" pom.xml
-          sed -i -e "s/<release.version>17<\/release.version>/<release.version>${{ inputs.java-version }}<\/release.version>/g" pom.xml
+          restore-keys: |
+            ${{ runner.os }}-maven-
 
       - name: Maven Package
         run: |
           chmod +x ./mvnw
-          ./mvnw package -Dpackaging=${{ inputs.packaging }} -Dmicronaut.runtime=lambda -Pgraalvm
+          ./mvnw package \
+            -Dpackaging=${{ inputs.packaging }} \
+            -Dmicronaut.runtime=lambda \
+            -Djdk.version=${{ inputs.java-version }} \
+            -Drelease.version=${{ inputs.java-version }} \
+            -Pgraalvm
         env:
           AWS_REGION: ap-northeast-1
 
