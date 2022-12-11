@@ -22,12 +22,34 @@ jobs:
 
       - uses: actions/cache@v3
         with:
-          path: .m2/repository
+          path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Maven Install
+        run: |
+          chmod +x ./mvnw
+          ./mvnw install -Dmaven.test.skip=true
 
       - name: Maven Test
         run: |
           chmod +x ./mvnw
-          ./mvnw install test
+          ./mvnw test
         env:
           AWS_REGION: ap-northeast-1
+
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v3
+        if: always() # always run even if the previous step fails
+        with:
+          report_paths: 'target/surefire-reports/TEST-*.xml'
+
+      - name: Add coverage to PR
+        id: jacoco
+        uses: madrapps/jacoco-report@v1.3
+        with:
+          paths: ${{ github.workspace }}/target/site/jacoco/jacoco.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 40
+          min-coverage-changed-files: 60
