@@ -3,7 +3,6 @@ package com.github.taigacat.awesomeblog.presentation.controller;
 import com.github.taigacat.awesomeblog.domain.common.PagingEntity;
 import com.github.taigacat.awesomeblog.domain.entity.Article;
 import com.github.taigacat.awesomeblog.domain.repository.ArticleRepository;
-import com.github.taigacat.awesomeblog.presentation.model.PagingResponse;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.*;
@@ -22,11 +21,11 @@ public class ArticleController {
 	}
 
 	@Get
-	public PagingResponse<Article> getArticles() {
+	public PagingEntity<Article> getArticles() {
 		LOGGER.info("in");
 		PagingEntity<Article> result = repository.findAll(100);
 		LOGGER.info("out");
-		return new PagingResponse<>(result.list(), result.nextPageToken());
+		return result;
 	}
 
 	@Delete("/{id}")
