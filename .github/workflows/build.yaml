@@ -24,30 +24,18 @@ jobs:
     needs:
       - test
       - build-version
-    uses: ./.github/workflows/_build.yaml
-    with:
-      build-version: ${{ needs.build-version.outputs.build-version }}
-      packaging: native-image
-      java-version: 17
-      graalvm-version: 22
-      stable: java17-22
-    secrets: inherit
-
-  build-jar:
-    needs:
-      - test
-      - build-version
     strategy:
       matrix:
+        packaging: [ native-image, jar ]
         java-version: [ 11, 17 ]
-    continue-on-error: true
+        graalvm-version: [ 22 ]
     uses: ./.github/workflows/_build.yaml
     with:
       build-version: ${{ needs.build-version.outputs.build-version }}
-      packaging: jar
+      packaging: ${{ matrix.packaging }}
       java-version: ${{ matrix.java-version }}
-      graalvm-version: 22
-      stable: java17-22
+      graalvm-version: ${{ matrix.graalvm-version }}
+      stable: java17-22-native-image
     secrets: inherit
 
   tag:
