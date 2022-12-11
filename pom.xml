@@ -19,6 +19,7 @@
         <release.version>17</release.version>
         <micronaut.version>3.7.4</micronaut.version>
         <lombok.version>1.18.24</lombok.version>
+        <dynamodb.local.version>[1.12,2.0)</dynamodb.local.version>
         <exec.mainClass>io.micronaut.function.aws.runtime.MicronautLambdaRuntime</exec.mainClass>
         <micronaut.runtime>lambda</micronaut.runtime>
     </properties>
@@ -27,6 +28,16 @@
         <repository>
             <id>central</id>
             <url>https://repo.maven.apache.org/maven2</url>
+        </repository>
+        <repository>
+            <id>dynamodb-local-oregon</id>
+            <name>DynamoDB Local Release Repository</name>
+            <url>https://s3-us-west-2.amazonaws.com/dynamodb-local/release</url>
+        </repository>
+        <repository>
+            <id>dynamodb-local-tokyo</id>
+            <name>DynamoDB Local Release Repository</name>
+            <url>https://s3-ap-northeast-1.amazonaws.com/dynamodb-local-tokyo/release</url>
         </repository>
     </repositories>
 
@@ -89,9 +100,8 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <scope>runtime</scope>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
         </dependency>
         <dependency>
             <groupId>io.micronaut.test</groupId>
@@ -106,6 +116,12 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>DynamoDBLocal</artifactId>
+            <version>${dynamodb.local.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -154,7 +170,26 @@
                     </compilerArgs>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.10</version>
+                <executions>
+                    <execution>
+                        <id>copy</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeScope>test</includeScope>
+                            <includeTypes>so,dll,dylib</includeTypes>
+                            <!--Keep an eye on output directory - it will be used for starting dynamodb-->
+                            <outputDirectory>${project.basedir}/target/native-libs</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
-
 </project>

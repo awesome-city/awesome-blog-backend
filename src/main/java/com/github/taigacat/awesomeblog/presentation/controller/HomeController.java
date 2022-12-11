@@ -1,4 +1,4 @@
-package com.github.taigacat.awesomeblog;
+package com.github.taigacat.awesomeblog.presentation.controller;
 
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;

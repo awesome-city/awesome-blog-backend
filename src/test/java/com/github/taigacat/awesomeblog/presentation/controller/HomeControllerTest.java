@@ -1,4 +1,4 @@
-package com.github.taigacat.awesomeblog;
+package com.github.taigacat.awesomeblog.presentation.controller;
 
 import com.amazonaws.serverless.exceptions.ContainerInitializationException;
 import com.amazonaws.serverless.proxy.internal.testutils.MockLambdaContext;
@@ -7,13 +7,15 @@ import com.amazonaws.serverless.proxy.model.AwsProxyResponse;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.micronaut.function.aws.proxy.MicronautLambdaHandler;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class HomeControllerTest {
+@MicronautTest
+class HomeControllerTest {
 
 	private static MicronautLambdaHandler handler;
 	private static final Context lambdaContext = new MockLambdaContext();

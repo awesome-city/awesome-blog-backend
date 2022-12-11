@@ -1,14 +1,21 @@
-package com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.schema;
+package com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity;
 
 import com.github.taigacat.awesomeblog.domain.common.Identified;
+import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.DynamoDbConfiguration;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.KeyAttribute;
 import io.micronaut.core.annotation.NonNull;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public interface DynamoDbEntity extends Identified {
+public interface DynamoDbEntity<T> extends Identified {
+
+	@NonNull
+	String getObjectName();
+
 	@NonNull
 	String getHashKey();
 
@@ -16,7 +23,10 @@ public interface DynamoDbEntity extends Identified {
 	String getRangeKey();
 
 	@NonNull
-	String getObjectName();
+	DynamoDbTable<T> getTable(
+			DynamoDbEnhancedClient enhancedClient,
+			DynamoDbConfiguration dynamoDbConfiguration
+	);
 
 	default Integer getTtl() {
 		return null;
