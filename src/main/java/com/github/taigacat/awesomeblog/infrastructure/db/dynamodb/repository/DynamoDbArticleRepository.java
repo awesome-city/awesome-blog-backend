@@ -44,10 +44,10 @@ public class DynamoDbArticleRepository extends DynamoDbRepository<ArticleDynamoD
     );
     LOGGER.info("out");
     return new PagingEntity<>(
-        dynamoEntity.list().stream()
+        dynamoEntity.getList().stream()
             .map(e -> (Article) e)
             .collect(Collectors.toList()),
-        dynamoEntity.nextPageToken()
+        dynamoEntity.getNextPageToken()
     );
   }
 
