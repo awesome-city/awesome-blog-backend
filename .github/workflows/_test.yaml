@@ -15,7 +15,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/graalvm/graalvm-ce:ol8-java17-22
+      image: marksailes/al2-graalvm:17-22.3.0
     steps:
       - name: Checkout
         uses: actions/checkout@v3

@@ -26,7 +26,7 @@ on:
         description: builder container name
         required: false
         type: string
-        default: 22
+        default: 22.3.0
       stable:
         description: stable version
         required: false
@@ -49,14 +49,14 @@ jobs:
       - id: version
         name: Version
         run: |
-          echo "version=java${{ inputs.java-version }}-${{ inputs.graalvm-version }}-${{ inputs.packaging }}" >> "$GITHUB_OUTPUT"
+          echo "version=${{ inputs.java-version }}-${{ inputs.graalvm-version }}-${{ inputs.packaging }}" >> "$GITHUB_OUTPUT"
 
   build:
     runs-on: ubuntu-latest
     needs:
       - version
     container:
-      image: ghcr.io/graalvm/graalvm-ce:ol9-java${{ inputs.java-version }}-${{ inputs.graalvm-version }}
+      image: marksailes/al2-graalvm:${{ inputs.java-version }}-${{ inputs.graalvm-version }}
     continue-on-error: ${{ needs.version.outputs.version != inputs.stable }}
     steps:
       - name: Checkout
@@ -85,7 +85,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: awesome-blog-backend-${{ inputs.packaging }}-java${{ inputs.java-version }}-${{ inputs.graalvm-version }}
+          name: ${{ inputs.packaging }}-${{ inputs.java-version }}-${{ inputs.graalvm-version }}
           path: ./target/awesome-blog-server*
           retention-days: 1
 
@@ -102,7 +102,7 @@ jobs:
       - name: Download Artifacts
         uses: actions/download-artifact@v3
         with:
-          name: awesome-blog-backend-${{ inputs.packaging }}-java${{ inputs.java-version }}-${{ inputs.graalvm-version }}
+          name: ${{ inputs.packaging }}-${{ inputs.java-version }}-${{ inputs.graalvm-version }}
           path: ./awesome-blog-backend
 
       - name: Rename Artifact

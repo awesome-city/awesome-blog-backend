@@ -28,14 +28,14 @@ jobs:
       matrix:
         packaging: [ native-image, jar ]
         java-version: [ 11, 17 ]
-        graalvm-version: [ 22 ]
+        graalvm-version: [ 22.3.0 ]
     uses: ./.github/workflows/_build.yaml
     with:
       build-version: ${{ needs.build-version.outputs.build-version }}
       packaging: ${{ matrix.packaging }}
       java-version: ${{ matrix.java-version }}
       graalvm-version: ${{ matrix.graalvm-version }}
-      stable: java17-22-native-image
+      stable: 17-22.3.0-native-image
     secrets: inherit
 
   tag:
