@@ -22,13 +22,13 @@ class DynamoDbArticleRepositoryTest {
   @Test
   void findAll() {
     PagingEntity<Article> result0 = repository.findAll(1000);
-    assertNotNull(result0.list());
-    assertEquals(0, result0.list().size());
+    assertNotNull(result0.getList());
+    assertEquals(0, result0.getList().size());
 
-    repository.put(new Article());
+    repository.create(new Article());
     PagingEntity<Article> result = repository.findAll(1000);
-    assertNotNull(result.list());
-    assertEquals(1, result.list().size());
-    result.list().forEach(article -> repository.delete(article.getId()));
+    assertNotNull(result.getList());
+    assertEquals(1, result.getList().size());
+    result.getList().forEach(article -> repository.delete(article.getId()));
   }
 }

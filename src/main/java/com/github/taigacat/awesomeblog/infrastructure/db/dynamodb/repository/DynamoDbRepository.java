@@ -43,7 +43,7 @@ import software.amazon.awssdk.services.dynamodb.model.ScalarAttributeType;
 @Requires(beans = {DynamoDbConfiguration.class, DynamoDbClient.class})
 @Singleton
 @Primary
-public class DynamoDbRepository<T extends DynamoDbEntity> {
+public class DynamoDbRepository {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamoDbRepository.class);
 
@@ -85,7 +85,8 @@ public class DynamoDbRepository<T extends DynamoDbEntity> {
     }
   }
 
-  public PagingEntity<T> findAll(T tableSchema, @Nullable Integer limit,
+  public <T extends DynamoDbEntity<T>> PagingEntity<T> findAll(T tableSchema,
+      @Nullable Integer limit,
       @Nullable String nextPageToken) {
     DynamoDbTable<T> table = this.getTable(tableSchema, enhancedClient, dynamoConfiguration);
 
@@ -120,7 +121,7 @@ public class DynamoDbRepository<T extends DynamoDbEntity> {
   }
 
 
-  public Optional<T> findOne(T condition) {
+  public <T extends DynamoDbEntity<T>> Optional<T> findOne(T condition) {
     DynamoDbTable<T> table = this.getTable(condition, enhancedClient, dynamoConfiguration);
 
     try {
@@ -134,7 +135,7 @@ public class DynamoDbRepository<T extends DynamoDbEntity> {
     }
   }
 
-  public void put(T entity) {
+  public <T extends DynamoDbEntity<T>> void put(T entity) {
     DynamoDbTable<T> table = this.getTable(entity, enhancedClient, dynamoConfiguration);
 
     try {
@@ -144,7 +145,7 @@ public class DynamoDbRepository<T extends DynamoDbEntity> {
     }
   }
 
-  public Optional<T> update(T entity) {
+  public <T extends DynamoDbEntity<T>> Optional<T> update(T entity) {
     DynamoDbTable<T> table = this.getTable(entity, enhancedClient, dynamoConfiguration);
 
     try {
@@ -156,7 +157,7 @@ public class DynamoDbRepository<T extends DynamoDbEntity> {
     }
   }
 
-  public Optional<T> delete(T entity) {
+  public <T extends DynamoDbEntity<T>> Optional<T> delete(T entity) {
     DynamoDbTable<T> table = this.getTable(entity, enhancedClient, dynamoConfiguration);
 
     try {
@@ -168,7 +169,8 @@ public class DynamoDbRepository<T extends DynamoDbEntity> {
     }
   }
 
-  private DynamoDbTable<T> getTable(T tableSchema, DynamoDbEnhancedClient enhancedClient,
+  private <T extends DynamoDbEntity<T>> DynamoDbTable<T> getTable(T tableSchema,
+      DynamoDbEnhancedClient enhancedClient,
       DynamoDbConfiguration dynamoConfiguration) {
     @SuppressWarnings("unchecked")
     DynamoDbTable<T> table = (DynamoDbTable<T>) tableSchema.getTable(

@@ -2,7 +2,6 @@ package com.github.taigacat.awesomeblog.test;
 
 import com.amazonaws.services.dynamodbv2.local.main.ServerRunner;
 import com.amazonaws.services.dynamodbv2.local.server.DynamoDBProxyServer;
-import com.github.taigacat.awesomeblog.domain.common.Identified;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.DynamoDbTableType;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.repository.DynamoDbRepository;
 import io.micronaut.context.annotation.Requires;
@@ -20,13 +19,13 @@ public class DynamoDbLocal {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamoDbLocal.class);
 
   private DynamoDBProxyServer server;
-  private final DynamoDbRepository<? extends Identified> dynamoRepository;
+  private final DynamoDbRepository dynamoRepository;
 
   private final String dynamoDbLocalPort;
 
   public DynamoDbLocal(
       @Value("${dynamodb.local.port}") String port,
-      DynamoDbRepository<? extends Identified> dynamoRepository
+      DynamoDbRepository dynamoRepository
   ) {
     this.dynamoRepository = dynamoRepository;
     this.dynamoDbLocalPort = port;

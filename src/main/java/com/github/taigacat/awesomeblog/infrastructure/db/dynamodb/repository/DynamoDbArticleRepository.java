@@ -4,16 +4,18 @@ import com.github.taigacat.awesomeblog.domain.common.PagingEntity;
 import com.github.taigacat.awesomeblog.domain.entity.Article;
 import com.github.taigacat.awesomeblog.domain.repository.ArticleRepository;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.DynamoDbConfiguration;
-import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.ArticleDynamoDbEntity;
+import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.article.ArticleNameRelation;
+import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.article.ArticleObject;
 import com.github.taigacat.awesomeblog.util.uuid.IdGenerator;
 import jakarta.inject.Singleton;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 @Singleton
-public class DynamoDbArticleRepository extends DynamoDbRepository<ArticleDynamoDbEntity> implements
+public class DynamoDbArticleRepository extends DynamoDbRepository implements
     ArticleRepository {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamoDbArticleRepository.class);
@@ -37,33 +39,66 @@ public class DynamoDbArticleRepository extends DynamoDbRepository<ArticleDynamoD
   @Override
   public PagingEntity<Article> findAll(Integer limit, String nextPageToken) {
     LOGGER.info("in");
-    PagingEntity<ArticleDynamoDbEntity> dynamoEntity = findAll(
-        new ArticleDynamoDbEntity(),
+    PagingEntity<ArticleObject> dynamoEntity = findAll(
+        new ArticleObject(),
         limit,
         nextPageToken
     );
     LOGGER.info("out");
     return new PagingEntity<>(
-        dynamoEntity.list().stream()
+        dynamoEntity.getList().stream()
             .map(e -> (Article) e)
             .collect(Collectors.toList()),
-        dynamoEntity.nextPageToken()
+        dynamoEntity.getNextPageToken()
     );
   }
 
   @Override
-  public void put(Article article) {
+  public Optional<Article> findById(String id) {
     LOGGER.info("in");
-    ArticleDynamoDbEntity dynamoDbEntity = ArticleDynamoDbEntity.of(idGenerator.generate());
-    LOGGER.debug("put article entity [" + dynamoDbEntity + "]");
-    put(dynamoDbEntity);
+    LOGGER.debug("find article by id [id = " + id + "]");
+    Optional<ArticleObject> object = findOne(new ArticleObject(id));
+    if (object.isPresent()) {
+      LOGGER.info("article found [id = " + object.get().getId() + "]");
+    } else {
+      LOGGER.info("article not found");
+    }
+    LOGGER.info("out");
+    return object.map(e -> e);
+  }
+
+  @Override
+  public Optional<Article> findByName(String name) {
+    LOGGER.info("in");
+    LOGGER.debug("find article by name [name = " + name + "]");
+    ArticleNameRelation articleNameRelation = ArticleNameRelation.ofName(name);
+    Optional<ArticleNameRelation> relation = findOne(articleNameRelation);
+    if (relation.isPresent()) {
+      LOGGER.info("relation found [id = " + relation.get().getId() + "]");
+    } else {
+      LOGGER.info("relation not found");
+      return Optional.empty();
+    }
+
+    Optional<Article> object = this.findById(relation.get().getId());
+    LOGGER.info("out");
+    return object;
+  }
+
+  @Override
+  public void create(Article article) {
+    LOGGER.info("in");
+    ArticleObject object = ArticleObject.fromArticle(article);
+    article.setId(idGenerator.generate());
+    LOGGER.info("put article entity [ id = " + object.getId() + "]");
+    put(object);
     LOGGER.info("out");
   }
 
   @Override
   public void delete(String id) {
     LOGGER.info("in");
-    delete(ArticleDynamoDbEntity.of(id));
+    delete(new ArticleObject(id));
     LOGGER.info("out");
   }
 }

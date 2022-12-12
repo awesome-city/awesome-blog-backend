@@ -2,6 +2,7 @@ package com.github.taigacat.awesomeblog.domain.repository;
 
 import com.github.taigacat.awesomeblog.domain.common.PagingEntity;
 import com.github.taigacat.awesomeblog.domain.entity.Article;
+import java.util.Optional;
 
 public interface ArticleRepository {
 
@@ -9,7 +10,11 @@ public interface ArticleRepository {
 
   PagingEntity<Article> findAll(Integer limit, String nextPageToken);
 
-  void put(Article article);
+  Optional<Article> findById(String id);
+
+  Optional<Article> findByName(String name);
+
+  void create(Article article);
 
   void delete(String id);
 }

@@ -13,13 +13,13 @@ class PagingEntityTest {
   @Test
   void list() {
     PagingEntity<String> pagingEntity = new PagingEntity<String>(List.of("test"), "token");
-    assertEquals("token", pagingEntity.nextPageToken());
+    assertEquals("token", pagingEntity.getNextPageToken());
   }
 
   @Test
   void nextPageToken() {
     PagingEntity<String> pagingEntity = new PagingEntity<String>(List.of("test"), "token");
-    assertEquals("test", pagingEntity.list().get(0));
+    assertEquals("test", pagingEntity.getList().get(0));
   }
 
   @Test

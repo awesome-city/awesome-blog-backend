@@ -5,6 +5,7 @@ import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.DynamoD
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.KeyAttribute;
 import io.micronaut.core.annotation.NonNull;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
@@ -12,14 +13,28 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 
 public interface DynamoDbEntity<T> extends Identified {
 
+  String HASH_KEY = "hashKey";
+
+  String RANGE_KEY = "rangeKey";
+
   @NonNull
   String getObjectName();
 
   @NonNull
   String getHashKey();
 
+  default void setHashKey(String hashKey) {
+  }
+
   @NonNull
   String getRangeKey();
+
+  default void setRangeKey(String rangeKey) {
+  }
+
+  default Integer getTtl() {
+    return null;
+  }
 
   @NonNull
   DynamoDbTable<T> getTable(
@@ -27,22 +42,18 @@ public interface DynamoDbEntity<T> extends Identified {
       DynamoDbConfiguration dynamoDbConfiguration
   );
 
-  default Integer getTtl() {
-    return null;
-  }
-
-  default String createHashKeyValue(@NonNull List<KeyAttribute> keyAttributes) {
+  default String createHashKeyValue(@NonNull KeyAttribute... keyAttributes) {
     List<KeyAttribute> keyAttributesWithObjectName = new ArrayList<>();
     keyAttributesWithObjectName.add(new KeyAttribute("object", this.getObjectName()));
-    keyAttributesWithObjectName.addAll(keyAttributes);
+    keyAttributesWithObjectName.addAll(Arrays.stream(keyAttributes).toList());
     return this.createKeyValue(keyAttributesWithObjectName);
   }
 
-  default String createRangeKeyValue(@NonNull List<KeyAttribute> keyAttributes) {
-    if (keyAttributes.isEmpty()) {
+  default String createRangeKeyValue(@NonNull KeyAttribute... keyAttributes) {
+    if (keyAttributes.length == 0) {
       return " ";
     } else {
-      return this.createKeyValue(keyAttributes);
+      return this.createKeyValue(Arrays.stream(keyAttributes).toList());
     }
   }
 
