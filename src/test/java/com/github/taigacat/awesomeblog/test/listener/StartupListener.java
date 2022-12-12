@@ -13,18 +13,18 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public class StartupListener implements ApplicationEventListener<StartupEvent> {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(StartupListener.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(StartupListener.class);
 
-	private final DynamoDbLocal dynamoDbLocal;
+  private final DynamoDbLocal dynamoDbLocal;
 
-	public StartupListener(DynamoDbLocal dynamoDbLocal) {
-		this.dynamoDbLocal = dynamoDbLocal;
-	}
+  public StartupListener(DynamoDbLocal dynamoDbLocal) {
+    this.dynamoDbLocal = dynamoDbLocal;
+  }
 
-	@Override
-	public void onApplicationEvent(StartupEvent event) {
-		LOGGER.info("in");
-		dynamoDbLocal.start();
-		LOGGER.info("end");
-	}
+  @Override
+  public void onApplicationEvent(StartupEvent event) {
+    LOGGER.info("in");
+    dynamoDbLocal.start();
+    LOGGER.info("end");
+  }
 }

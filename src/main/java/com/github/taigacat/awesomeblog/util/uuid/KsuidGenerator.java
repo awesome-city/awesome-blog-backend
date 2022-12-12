@@ -8,9 +8,10 @@ import jakarta.inject.Singleton;
 @Requires(classes = Ksuid.class)
 @Singleton
 public class KsuidGenerator implements IdGenerator {
-	@Override
-	@NonNull
-	public String generate() {
-		return Ksuid.newKsuid().toString();
-	}
+
+  @Override
+  @NonNull
+  public String generate() {
+    return Ksuid.newKsuid().toString();
+  }
 }

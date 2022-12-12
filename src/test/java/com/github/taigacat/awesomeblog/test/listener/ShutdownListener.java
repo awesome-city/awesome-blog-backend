@@ -13,18 +13,18 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public class ShutdownListener implements ApplicationEventListener<ShutdownEvent> {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(ShutdownListener.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ShutdownListener.class);
 
-	private final DynamoDbLocal dynamoDbLocal;
+  private final DynamoDbLocal dynamoDbLocal;
 
-	public ShutdownListener(DynamoDbLocal dynamoDbLocal) {
-		this.dynamoDbLocal = dynamoDbLocal;
-	}
+  public ShutdownListener(DynamoDbLocal dynamoDbLocal) {
+    this.dynamoDbLocal = dynamoDbLocal;
+  }
 
-	@Override
-	public void onApplicationEvent(ShutdownEvent event) {
-		LOGGER.info("in");
-		dynamoDbLocal.stop();
-		LOGGER.info("end");
-	}
+  @Override
+  public void onApplicationEvent(ShutdownEvent event) {
+    LOGGER.info("in");
+    dynamoDbLocal.stop();
+    LOGGER.info("end");
+  }
 }

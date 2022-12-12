@@ -1,13 +1,13 @@
 package com.github.taigacat.awesomeblog.domain.common;
 
+import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-
-import java.util.List;
 
 @EqualsAndHashCode
 @ToString
 public final class PagingEntity<T> {
+
 	private final List<T> list;
 	private final String nextPageToken;
 
