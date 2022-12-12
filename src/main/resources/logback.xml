@@ -3,7 +3,8 @@
         <withJansi>true</withJansi>
 
         <encoder>
-            <pattern>%cyan(%d{HH:mm:ss.SSS}) %gray([%thread]) %highlight(%-5level) %magenta(%logger{36}) - %msg%n
+            <pattern>%cyan(%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}) %gray([%thread]) %highlight(%-5level) %msg [%magenta(%M
+                %logger{36}:%line)] %n
             </pattern>
         </encoder>
     </appender>

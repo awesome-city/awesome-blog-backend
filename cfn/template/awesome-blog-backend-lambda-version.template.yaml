@@ -1,0 +1,23 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Create Lambda version for backend
+
+Parameters:
+  ServiceName:
+    Type: String
+    Default: 'awesome-blog'
+  Environment:
+    Type: String
+    AllowedValues:
+      - dev
+      - stg
+      - prd
+
+Resources:
+  BackendFunctionVersion:
+    Type: AWS::Lambda::Version
+    Properties:
+      FunctionName: !Join [ '-', [ !Ref ServiceName, !Ref Environment, 'backend' ] ]
+
+Outputs:
+  BackendFunctionVersionNum:
+    Value: !GetAtt BackendFunctionVersion.Version

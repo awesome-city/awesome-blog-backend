@@ -1,0 +1,25 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Create Lambda alias for backend
+
+Parameters:
+  ServiceName:
+    Type: String
+    Default: 'awesome-blog'
+  Environment:
+    Type: String
+    AllowedValues:
+      - dev
+      - stg
+      - prd
+  FunctionAlias:
+    Type: String
+  FunctionVersion:
+    Type: String
+
+Resources:
+  BackendFunctionAlias:
+    Type: AWS::Lambda::Alias
+    Properties:
+      FunctionName: !Join [ '-', [ !Ref ServiceName, !Ref Environment, 'backend' ] ]
+      FunctionVersion: !Ref FunctionVersion
+      Name: !Ref FunctionAlias

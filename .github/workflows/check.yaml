@@ -1,4 +1,4 @@
-name: Check
+name: Check on receive pull request
 on:
   pull_request:
     branches:
@@ -9,11 +9,8 @@ on:
       - '!main'
 
 jobs:
-  dependency-review:
-    uses: ./.github/workflows/_dependency-review.yaml
-
   codeQL:
     uses: ./.github/workflows/_codeql.yaml
-    
+
   test:
     uses: ./.github/workflows/_test.yaml

@@ -1,0 +1,61 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Create Lambda for backend
+
+Parameters:
+  ServiceName:
+    Type: String
+    Default: 'awesome-blog'
+  Environment:
+    Type: String
+    AllowedValues:
+      - dev
+      - stg
+      - prd
+  ArtifactBucket:
+    Type: String
+  ArtifactKey:
+    Type: String
+
+Resources:
+  BackendFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join [ '-', [ !Ref ServiceName, !Ref Environment, 'backend-lambda-role' ] ]
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      MaxSessionDuration: 3600
+
+  BackendFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Architectures:
+        - x86_64
+      FunctionName: !Join [ '-', [ !Ref ServiceName, !Ref Environment, 'backend' ] ]
+      # Custom runtime (Amazonlinux2)
+      Runtime: provided.al2
+      Code:
+        S3Bucket: !Ref ArtifactBucket
+        S3Key: !Ref ArtifactKey
+      Handler: hello.handler
+      Role: !GetAtt BackendFunctionRole.Arn
+      MemorySize: 128
+      Timeout: 15
+
+  BackendFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join [ '', [ '/aws/lambda/', !Ref BackendFunction ] ]
+      RetentionInDays: 7
+
+Outputs:
+  BackendFunction:
+    Value: !Ref BackendFunction

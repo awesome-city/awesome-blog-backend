@@ -1,0 +1,113 @@
+name: Deploy
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      aws-region:
+        required: true
+        type: string
+      build-version:
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  echo:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "environment=${{ inputs.environment }}"
+          echo "aws-region=${{ inputs.aws-region }}"
+          echo "aws-role-arn=${{ secrets.AWS_DEPLOYMENT_ROLE_ARN }}"
+          echo "build-version=${{ inputs.build-version }}"
+
+  create-lambda:
+    needs:
+      - echo
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOYMENT_ROLE_ARN }}
+          aws-region: ${{ inputs.aws-region }}
+
+      - name: AWS CloudFormation "Create lambda stack"
+        uses: aws-actions/aws-cloudformation-github-deploy@v1.0.3
+        with:
+          name: 'awesome-blog-${{ inputs.environment }}-backend-lambda'
+          template: ./cfn/template/awesome-blog-backend-lambda.template.yaml
+          no-fail-on-empty-changeset: "1"
+          parameter-overrides: >-
+            ServiceName=awesome-blog,
+            Environment=${{ inputs.environment }},
+            ArtifactBucket=awesome-blog-an1-dev-mdl,
+            ArtifactKey=artifact/blog/backend/${{ inputs.build-version }}/function.zip
+          capabilities: CAPABILITY_NAMED_IAM
+          tags: '[ { "Key": "Owner", "Value": "awesome" }, { "Key": "Phase", "Value": "${{ inputs.environment }}" } ]'
+
+      - name: Describe stack
+        run: |
+          aws cloudformation describe-stack-resources --stack-name 'awesome-blog-${{ inputs.environment }}-backend-lambda' --output table
+
+  create-lambda-version:
+    needs:
+      - create-lambda
+    runs-on: ubuntu-latest
+    outputs:
+      BackendFunctionVersionNum: ${{ steps.cloudformation.outputs.BackendFunctionVersionNum }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOYMENT_ROLE_ARN }}
+          aws-region: ${{ inputs.aws-region }}
+
+      - id: cloudformation
+        name: AWS CloudFormation "Create lambda version stack"
+        uses: aws-actions/aws-cloudformation-github-deploy@v1.0.3
+        with:
+          name: 'awesome-blog-${{ inputs.environment }}-backend-version-${{ inputs.build-version }}'
+          template: ./cfn/template/awesome-blog-backend-lambda-version.template.yaml
+          no-fail-on-empty-changeset: "1"
+          parameter-overrides: >-
+            ServiceName=awesome-blog,
+            Environment=${{ inputs.environment }}
+          tags: '[ { "Key": "Owner", "Value": "awesome" }, { "Key": "Phase", "Value": "${{ inputs.environment }}" } ]'
+
+  deploy:
+    needs:
+      - create-lambda-version
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOYMENT_ROLE_ARN }}
+          aws-region: ${{ inputs.aws-region }}
+
+      - name: AWS CloudFormation "Upload lambda alias"
+        uses: aws-actions/aws-cloudformation-github-deploy@v1.0.3
+        with:
+          name: 'awesome-blog-${{ inputs.environment }}-backend-lambda-alias'
+          template: ./cfn/template/awesome-blog-backend-lambda-alias.template.yaml
+          no-fail-on-empty-changeset: "1"
+          parameter-overrides: >-
+            ServiceName=awesome-blog,
+            Environment=${{ inputs.environment }},
+            FunctionAlias=live,
+            FunctionVersion=${{ needs.create-lambda-version.outputs.BackendFunctionVersionNum }}
+          tags: '[ { "Key": "Owner", "Value": "awesome" }, { "Key": "Phase", "Value": "${{ inputs.environment }}" } ]'

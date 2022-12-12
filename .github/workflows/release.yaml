@@ -1,0 +1,54 @@
+name: Trigger on tag pushed
+on:
+  push:
+    tags:
+      - 'v*'
+  release:
+    types:
+      - prereleased
+      - released
+
+jobs:
+  build-version:
+    runs-on: ubuntu-latest
+    outputs:
+      build-version: ${{ steps.TagName.outputs.build-version }}
+    steps:
+      - id: TagName
+        run: echo "build-version=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+
+      - id: Echo
+        run: echo "build-version=${{ steps.TagName.outputs.build-version }}"
+
+  switch-environment:
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.Environment.outputs.environment }}
+    steps:
+      - id: Environment
+        run: |
+          if [ ${{ github.event_name }} == 'push' ]; then
+            echo "environment=dev" >> "$GITHUB_OUTPUT"
+          elif [ ${{ github.event_name }} == 'release' ] && [ ${{ github.event.action }} == 'prereleased' ]; then
+            echo "environment=stg" >> "$GITHUB_OUTPUT"
+          elif [ ${{ github.event_name }} == 'release' ] && [ ${{ github.event.action }} == 'released' ]; then
+            echo "environment=prd" >> "$GITHUB_OUTPUT"
+          fi
+        shell: bash
+
+      - name: Echo
+        run: echo "environment=${{ steps.Environment.outputs.environment }}"
+
+  deploy:
+    needs:
+      - build-version
+      - switch-environment
+    strategy:
+      matrix:
+        aws-region: [ ap-northeast-1 ]
+    uses: ./.github/workflows/_deployment.yaml
+    with:
+      environment: ${{ needs.switch-environment.outputs.environment }}
+      aws-region: ${{ matrix.aws-region }}
+      build-version: ${{ needs.build-version.outputs.build-version }}
+    secrets: inherit
