@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: "2010-09-09"
+AWSTemplateFormatVersion: '2010-09-09'
 Description: Create Lambda for backend
 
 Parameters:
@@ -17,45 +17,64 @@ Parameters:
     Type: String
 
 Resources:
-  BackendFunctionRole:
+  BackendApiFunctionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Join [ '-', [ !Ref ServiceName, !Ref Environment, 'backend-lambda-role' ] ]
+      RoleName: !Join [ '-', [ !Ref ServiceName, !Ref Environment, 'backend-api-lambda-role' ] ]
       AssumeRolePolicyDocument:
-        Version: "2012-10-17"
+        Version: '2012-10-17'
         Statement:
-          - Effect: "Allow"
+          - Effect: 'Allow'
             Principal:
               Service:
-                - "lambda.amazonaws.com"
+                - 'lambda.amazonaws.com'
             Action:
-              - "sts:AssumeRole"
+              - 'sts:AssumeRole'
+          - Effect: 'Allow'
+            Action:
+              - 'dynamodb:BatchGetItem'
+              - 'dynamodb:GetItem'
+              - 'dynamodb:Query'
+              - 'dynamodb:Scan'
+              - 'dynamodb:BatchWriteItem'
+              - 'dynamodb:PutItem'
+              - 'dynamodb:UpdateItem'
+            Resource:
+              Fn::Join:
+                - '/'
+                - - Fn::Join:
+                      - ':'
+                      - - 'arn:aws:dynamodb'
+                        - !Ref AWS::Region
+                        - !Ref AWS::AccountId
+                        - 'table'
+                  - !Join [ '-', [ !Ref ServiceName, !Ref Environment, '*' ] ]
       ManagedPolicyArns:
-        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
       MaxSessionDuration: 3600
 
-  BackendFunction:
+  BackendApiFunction:
     Type: AWS::Lambda::Function
     Properties:
       Architectures:
         - x86_64
-      FunctionName: !Join [ '-', [ !Ref ServiceName, !Ref Environment, 'backend' ] ]
+      FunctionName: !Join [ '-', [ !Ref ServiceName, !Ref Environment, 'backend-api' ] ]
       # Custom runtime (Amazonlinux2)
       Runtime: provided.al2
       Code:
         S3Bucket: !Ref ArtifactBucket
         S3Key: !Ref ArtifactKey
       Handler: hello.handler
-      Role: !GetAtt BackendFunctionRole.Arn
+      Role: !GetAtt BackendApiFunctionRole.Arn
       MemorySize: 128
       Timeout: 15
 
-  BackendFunctionLogGroup:
+  BackendApiFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Join [ '', [ '/aws/lambda/', !Ref BackendFunction ] ]
+      LogGroupName: !Join [ '', [ '/aws/lambda/', !Ref BackendApiFunction ] ]
       RetentionInDays: 7
 
 Outputs:
-  BackendFunction:
-    Value: !Ref BackendFunction
+  BackendApiFunction:
+    Value: !Ref BackendApiFunction

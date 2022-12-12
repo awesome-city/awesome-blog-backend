@@ -13,11 +13,11 @@ Parameters:
       - prd
 
 Resources:
-  BackendFunctionVersion:
+  BackendApiFunctionVersion:
     Type: AWS::Lambda::Version
     Properties:
-      FunctionName: !Join [ '-', [ !Ref ServiceName, !Ref Environment, 'backend' ] ]
+      FunctionName: !Join [ '-', [ !Ref ServiceName, !Ref Environment, 'backend-api' ] ]
 
 Outputs:
   BackendFunctionVersionNum:
-    Value: !GetAtt BackendFunctionVersion.Version
+    Value: !GetAtt BackendApiFunctionVersion.Version

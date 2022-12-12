@@ -12,6 +12,28 @@ jobs:
       - name: Lint
         uses: reviewdog/action-actionlint@v1
 
+  lint-cfn:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install cfn-lint
+        run: |
+          python -m pip install --upgrade pip
+          pip install cfn-lint
+
+      - name: Add problem matcher
+        run: echo "::add-matcher::.github/cfn-lint-matcher.json"
+
+      - name: Lint by cfn-lint
+        run: cfn-lint ./cfn/template/*.yaml -f parseable
+
   test:
     runs-on: ubuntu-latest
     container:

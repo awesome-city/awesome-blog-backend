@@ -17,9 +17,9 @@ Parameters:
     Type: String
 
 Resources:
-  BackendFunctionAlias:
+  BackendApiFunctionAlias:
     Type: AWS::Lambda::Alias
     Properties:
-      FunctionName: !Join [ '-', [ !Ref ServiceName, !Ref Environment, 'backend' ] ]
+      FunctionName: !Join [ '-', [ !Ref ServiceName, !Ref Environment, 'backend-api' ] ]
       FunctionVersion: !Ref FunctionVersion
       Name: !Ref FunctionAlias
