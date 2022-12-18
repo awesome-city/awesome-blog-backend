@@ -2,20 +2,39 @@ package com.github.taigacat.awesomeblog.domain.repository;
 
 import com.github.taigacat.awesomeblog.domain.common.PagingEntity;
 import com.github.taigacat.awesomeblog.domain.entity.Article;
+import io.micronaut.core.annotation.NonNull;
 import java.util.Optional;
 
 public interface ArticleRepository {
 
-  PagingEntity<Article> findAll(Article.Status status, Integer limit);
+  PagingEntity<Article> findAll(
+      @NonNull String tenant,
+      @NonNull Article.Status status,
+      Integer limit
+  );
 
-  PagingEntity<Article> findAll(Article.Status status, Integer limit, String nextPageToken);
+  PagingEntity<Article> findAll(
+      @NonNull String tenant,
+      @NonNull Article.Status status,
+      Integer limit,
+      String nextPageToken);
 
-  Optional<Article> findById(Article.Status status, String id);
+  Optional<Article> findById(
+      @NonNull String tenant,
+      @NonNull Article.Status status,
+      @NonNull String id
+  );
 
-  Optional<Article> findByName(String name);
+  Optional<Article> findByName(
+      @NonNull String tenant,
+      @NonNull String name
+  );
 
-  void create(Article article);
+  void create(@NonNull Article article);
 
-  void delete(String id);
+  void delete(
+      @NonNull String tenant,
+      @NonNull String id
+  );
 }
 

@@ -4,10 +4,14 @@ import com.github.taigacat.awesomeblog.domain.entity.Article;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.DynamoDbSupport;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.DynamoDbTableType;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.DynamoDbEntity;
+import com.github.taigacat.awesomeblog.util.micronaut.BeanUtil;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import lombok.ToString;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbIgnore;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
@@ -20,18 +24,11 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortK
 @NoArgsConstructor
 public class ArticleObject extends Article implements DynamoDbEntity {
 
-  public ArticleObject(Article.Status status) {
-    super(status);
-  }
+  private static final Logger LOGGER = LoggerFactory.getLogger(ArticleObject.class);
 
-  public ArticleObject(Article.Status status, String id) {
-    super(status, id);
-  }
-
-  public static ArticleObject fromArticle(Article article) {
-    ArticleObject object = new ArticleObject();
-    object.setStatus(article.getStatus());
-    return object;
+  @NonNull
+  public static ArticleObject of(Article article) {
+    return BeanUtil.createAndCopy(article, ArticleObject.class);
   }
 
   @Override
@@ -44,7 +41,8 @@ public class ArticleObject extends Article implements DynamoDbEntity {
   public String getHashKey() {
     return DynamoDbSupport.createHashKeyValue(
         "Article",
-        "status", getStatus().name().toLowerCase()
+        "tenant", this.getTenant(),
+        "status", this.getStatus().name().toLowerCase()
     );
   }
 

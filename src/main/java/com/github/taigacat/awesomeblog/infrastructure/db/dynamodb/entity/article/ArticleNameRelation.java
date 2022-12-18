@@ -5,6 +5,7 @@ import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.DynamoD
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.DynamoDbEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
@@ -14,27 +15,23 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortK
 @EqualsAndHashCode
 @ToString
 @Data
+@NoArgsConstructor
 public class ArticleNameRelation implements DynamoDbEntity {
 
+  private String tenant;
   private String id;
 
   private String name;
 
-  public ArticleNameRelation() {
+  public ArticleNameRelation(String tenant, String name) {
+    this.tenant = tenant;
+    this.name = name;
   }
 
-
-  public static ArticleNameRelation ofName(String name) {
-    ArticleNameRelation relation = new ArticleNameRelation();
-    relation.name = name;
-    return relation;
-  }
-
-  public static ArticleNameRelation ofIdName(String id, String name) {
-    ArticleNameRelation relation = new ArticleNameRelation();
-    relation.id = id;
-    relation.name = name;
-    return relation;
+  public ArticleNameRelation(ArticleObject object) {
+    this.tenant = object.getTenant();
+    this.id = object.getId();
+    this.name = object.getName();
   }
 
   @Override
@@ -47,6 +44,7 @@ public class ArticleNameRelation implements DynamoDbEntity {
   public String getHashKey() {
     return DynamoDbSupport.createHashKeyValue(
         "Article-name",
+        "tenant", this.getTenant(),
         "name", this.getName()
     );
   }

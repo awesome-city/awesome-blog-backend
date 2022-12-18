@@ -27,7 +27,7 @@ public class ArticleController {
   @Get
   public PagingEntity<Article> getArticles() {
     LOGGER.info("in");
-    PagingEntity<Article> result = repository.findAll(Article.Status.PUBLISHED, 100);
+    PagingEntity<Article> result = repository.findAll("tenant_TODO", Article.Status.PUBLISHED, 100);
     LOGGER.info("out");
     return result;
   }
@@ -35,6 +35,6 @@ public class ArticleController {
   @Delete("/{id}")
   @Status(HttpStatus.NO_CONTENT)
   public void delete(@PathVariable @NonNull @NotBlank String id) {
-    repository.delete(id);
+    repository.delete("tenant_TODO", id);
   }
 }

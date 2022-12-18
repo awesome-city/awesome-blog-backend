@@ -8,6 +8,7 @@ import com.github.taigacat.awesomeblog.domain.entity.Article;
 import com.github.taigacat.awesomeblog.domain.entity.Article.Status;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,19 +21,30 @@ class DynamoDbArticleRepositoryTest {
   @Inject
   DynamoDbArticleRepository repository;
 
+  private String tenantId;
+  private int tenantNum;
+
+  @BeforeEach
+  void setUp() {
+    tenantNum++;
+    tenantId = String.format("tenant_%d", tenantNum);
+  }
+
   @Test
   void test_findAll() {
     LOGGER.info("articles is empty");
-    PagingEntity<Article> result0 = repository.findAll(Status.PUBLISHED, 1000);
+    PagingEntity<Article> result0 = repository.findAll(tenantId, Status.PUBLISHED, 1000);
     assertNotNull(result0.getList());
     assertEquals(0, result0.getList().size());
 
     LOGGER.info("articles is 1");
-    repository.create(new Article(Status.PUBLISHED));
-    PagingEntity<Article> result = repository.findAll(Status.PUBLISHED, 1000);
+    repository.create(
+        new Article.Builder().status(Status.PUBLISHED).tenant(tenantId).build()
+    );
+    PagingEntity<Article> result = repository.findAll(tenantId, Status.PUBLISHED, 1000);
     assertNotNull(result.getList());
     assertEquals(1, result.getList().size());
-    result.getList().forEach(article -> repository.delete(article.getId()));
+    result.getList().forEach(article -> repository.delete(tenantId, article.getId()));
   }
 
   @Test

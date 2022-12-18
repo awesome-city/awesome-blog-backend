@@ -1,6 +1,7 @@
 package com.github.taigacat.awesomeblog.domain.entity;
 
 import com.github.taigacat.awesomeblog.domain.common.Identified;
+import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import java.time.Instant;
 import java.util.Set;
@@ -10,20 +11,16 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+@Introspected
 @Data
 @EqualsAndHashCode
 @ToString(callSuper = true)
 @NoArgsConstructor
 public class Article implements Identified {
 
-  public Article(Status status) {
-    this.status = status;
-  }
-
-  public Article(Status status, String id) {
-    this(status);
-    this.id = id;
-  }
+  @NonNull
+  @NotBlank
+  private String tenant;
 
   /**
    * 記事ID
@@ -97,9 +94,39 @@ public class Article implements Identified {
   /**
    * 記事ステータス
    */
+  @Introspected
   public enum Status {
     PUBLISHED,
     DRAFT
   }
 
+  public static class Builder {
+
+    private String tenant;
+    private Status status;
+    private String id;
+
+    public Article build() {
+      Article article = new Article();
+      article.tenant = tenant;
+      article.status = status;
+      article.id = id;
+      return article;
+    }
+
+    public Builder tenant(String tenant) {
+      this.tenant = tenant;
+      return this;
+    }
+
+    public Builder status(Status status) {
+      this.status = status;
+      return this;
+    }
+
+    public Builder id(String id) {
+      this.id = id;
+      return this;
+    }
+  }
 }
