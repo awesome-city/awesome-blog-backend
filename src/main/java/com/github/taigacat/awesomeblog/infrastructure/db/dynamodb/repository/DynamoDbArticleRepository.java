@@ -5,9 +5,12 @@ import com.github.taigacat.awesomeblog.domain.entity.Article;
 import com.github.taigacat.awesomeblog.domain.entity.Article.Status;
 import com.github.taigacat.awesomeblog.domain.repository.ArticleRepository;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.DynamoDbConfiguration;
+import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.article.ArticleAuthorRelation;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.article.ArticleNameRelation;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.article.ArticleObject;
-import com.github.taigacat.awesomeblog.util.uuid.IdGenerator;
+import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.article.ArticleTagRelation;
+import com.github.taigacat.awesomeblog.util.CollectionUtils;
+import com.github.taigacat.awesomeblog.util.id.IdGenerator;
 import io.micronaut.core.annotation.NonNull;
 import jakarta.inject.Singleton;
 import java.util.Optional;
@@ -34,15 +37,10 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
   }
 
   @Override
-  public PagingEntity<Article> findAll(String tenant, Article.Status status, Integer limit) {
-    return this.findAll(tenant, status, limit, null);
-  }
-
-  @Override
   public PagingEntity<Article> findAll(String tenant, Article.Status status, Integer limit,
       String nextPageToken) {
     LOGGER.info("in");
-    PagingEntity<ArticleObject> dynamoEntity = findAll(
+    PagingEntity<ArticleObject> dynamoEntity = findAllItems(
         ArticleObject.of(new Article.Builder().tenant(tenant).status(status).build()),
         limit,
         nextPageToken
@@ -76,25 +74,50 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
 
   @Override
   public Optional<Article> findByName(String tenant, String name) {
-    LOGGER.info("in");
     LOGGER.debug("find article by name [name = " + name + "]");
     ArticleNameRelation articleNameRelation = new ArticleNameRelation(tenant, name);
     Optional<ArticleNameRelation> relation = findItem(articleNameRelation);
     if (relation.isPresent()) {
-      LOGGER.info("relation found [id = " + relation.get().getId() + "]");
+      ArticleNameRelation r = relation.get();
+      LOGGER.info("relation found [id = " + r.getId() + "]");
+      return this.findById(tenant, r.getStatus(), r.getId());
     } else {
       LOGGER.info("relation not found");
       return Optional.empty();
     }
-
-    Optional<Article> object = this.findById(tenant, Status.PUBLISHED, relation.get().getId());
-    LOGGER.info("out");
-    return object;
   }
 
   @Override
-  public void create(Article article) {
+  public PagingEntity<Article> findByTag(String tenant, Status status, String tagId, Integer limit,
+      String nextPageToken) {
+    LOGGER.debug("find articles by tag [tag = " + tagId + "]");
+    ArticleTagRelation articleTagRelation = new ArticleTagRelation(tenant, tagId);
+    PagingEntity<ArticleTagRelation> dynamoEntity = findAllItems(articleTagRelation, limit,
+        nextPageToken);
+
+    // TODO BatchGetItem
+
+    throw new RuntimeException();
+  }
+
+  @Override
+  public PagingEntity<Article> findByAuthor(String tenant, Status status, String authorId,
+      Integer limit,
+      String nextPageToken) {
+    throw new RuntimeException();
+  }
+
+  @Override
+  public Article save(Article article) {
     LOGGER.info("in");
+
+    Article old = null;
+    if (article.getId() != null && !article.getId().isEmpty()) {
+      var saved = findById(article.getTenant(), article.getStatus(), article.getId());
+      if (saved.isPresent()) {
+        old = saved.get();
+      }
+    }
 
     // Object
     ArticleObject object = ArticleObject.of(article);
@@ -102,11 +125,37 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
     LOGGER.info("put article entity [ id = " + object.getId() + "]");
     putItem(object);
 
-    // Relation
-    ArticleNameRelation nameRelation = new ArticleNameRelation(object);
-    putItem(nameRelation);
+    // Relation - name
+    if (old != null && !article.getName().equals(old.getName())) {
+      deleteItem(new ArticleNameRelation(old));
+    }
+    putItem(new ArticleNameRelation(object));
+
+    // Relation - tag
+    if (old != null) {
+      for (String oldTag : CollectionUtils.setDifference(old.getTags(), article.getTags())) {
+        deleteItem(new ArticleTagRelation(object.getTenant(), oldTag, object.getId()));
+      }
+
+      for (String newTag : CollectionUtils.setDifference(article.getTags(), old.getTags())) {
+        putItem(new ArticleTagRelation(object.getTenant(), newTag, object.getId()));
+      }
+
+    } else {
+      for (ArticleTagRelation tagRelation : ArticleTagRelation.of(object)) {
+        putItem(tagRelation);
+      }
+    }
+
+    // Relation - author
+    if (old != null && old.getAuthorId() != null && !old.getAuthorId()
+        .equals(object.getAuthorId())) {
+      deleteItem(new ArticleAuthorRelation(old));
+    }
+    putItem(new ArticleAuthorRelation(object));
 
     LOGGER.info("out");
+    return object;
   }
 
   @Override
@@ -114,8 +163,16 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
     LOGGER.info("in");
 
     Consumer<ArticleObject> deleteRelations = (article) -> {
-      ArticleNameRelation nameRelation = new ArticleNameRelation(article);
-      deleteItem(nameRelation);
+      // ArticleName
+      deleteItem(new ArticleNameRelation(article));
+
+      // ArticleTag
+      for (ArticleTagRelation tagRelation : ArticleTagRelation.of(article)) {
+        deleteItem(tagRelation);
+      }
+
+      // ArticleAuthor
+      deleteItem(new ArticleAuthorRelation(article));
     };
 
     this.findById(tenant, Status.PUBLISHED, id)

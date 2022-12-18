@@ -6,6 +6,7 @@ import io.micronaut.core.annotation.NonNull;
 import java.time.Instant;
 import java.util.Set;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
@@ -35,21 +36,26 @@ public class Article implements Identified {
   /**
    * タイトル
    */
+  @NonNull
+  @NotBlank
   private String title;
 
   /**
    * タグ
    */
+  @NotEmpty
   private Set<String> tags;
 
   /**
    * ステータス
    */
-  private Status status;
+  @NonNull
+  private Status status = Status.DRAFT;
 
   /**
    * 著者ID
    */
+  @NonNull
   private String authorId;
 
   /**
@@ -106,7 +112,6 @@ public class Article implements Identified {
   }
 
   @Override
-  @NonNull
   public String getId() {
     return id;
   }
@@ -218,6 +223,8 @@ public class Article implements Identified {
     private Status status;
     private String id;
     private String name;
+    private Set<String> tags;
+    private String authorId;
 
     public Article build() {
       Article article = new Article();
@@ -225,6 +232,8 @@ public class Article implements Identified {
       article.status = status;
       article.id = id;
       article.name = name;
+      article.tags = tags;
+      article.authorId = authorId;
       return article;
     }
 
@@ -245,6 +254,16 @@ public class Article implements Identified {
 
     public Builder id(String id) {
       this.id = id;
+      return this;
+    }
+
+    public Builder tags(Set<String> tags) {
+      this.tags = tags;
+      return this;
+    }
+
+    public Builder author(String authorId) {
+      this.authorId = authorId;
       return this;
     }
   }

@@ -10,14 +10,9 @@ public interface ArticleRepository {
   PagingEntity<Article> findAll(
       @NonNull String tenant,
       @NonNull Article.Status status,
-      Integer limit
-  );
-
-  PagingEntity<Article> findAll(
-      @NonNull String tenant,
-      @NonNull Article.Status status,
       Integer limit,
-      String nextPageToken);
+      String nextPageToken
+  );
 
   Optional<Article> findById(
       @NonNull String tenant,
@@ -30,7 +25,23 @@ public interface ArticleRepository {
       @NonNull String name
   );
 
-  void create(@NonNull Article article);
+  PagingEntity<Article> findByTag(
+      @NonNull String tenant,
+      @NonNull Article.Status status,
+      @NonNull String tagId,
+      Integer limit,
+      String nextPageToken
+  );
+
+  PagingEntity<Article> findByAuthor(
+      @NonNull String tenant,
+      @NonNull Article.Status status,
+      @NonNull String authorId,
+      Integer limit,
+      String nextPageToken
+  );
+
+  Article save(@NonNull Article article);
 
   void delete(
       @NonNull String tenant,

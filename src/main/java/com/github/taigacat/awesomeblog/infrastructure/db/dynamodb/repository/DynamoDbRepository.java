@@ -15,6 +15,7 @@ import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,9 +27,12 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.model.BatchGetItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.BatchGetResultPage;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.ReadBatch;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeDefinition;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
@@ -86,26 +90,26 @@ public class DynamoDbRepository {
     }
   }
 
-  public <T extends DynamoDbEntity> PagingEntity<T> findAll(T tableSchema,
+  public <T extends DynamoDbEntity> PagingEntity<T> findAllItems(T tableSchema,
       @Nullable Integer limit,
       @Nullable String nextPageToken) {
     DynamoDbTable<T> table = this.getTable(tableSchema, enhancedClient, dynamoConfiguration);
 
-    QueryEnhancedRequest.Builder request = QueryEnhancedRequest.builder().queryConditional(
+    QueryEnhancedRequest.Builder builder = QueryEnhancedRequest.builder().queryConditional(
         QueryConditional.keyEqualTo(
             Key.builder().partitionValue(tableSchema.getHashKey()).build()));
     if (limit != null) {
-      request.limit(limit);
+      builder.limit(limit);
     }
 
     if (nextPageToken != null) {
       Map<String, AttributeValue> exclusiveStartKey = parseNextPageToken(nextPageToken);
       if (exclusiveStartKey != null) {
-        request.exclusiveStartKey(exclusiveStartKey);
+        builder.exclusiveStartKey(exclusiveStartKey);
       }
     }
 
-    QueryEnhancedRequest enhancedRequest = request.build();
+    QueryEnhancedRequest enhancedRequest = builder.build();
 
     List<T> items = new ArrayList<>();
     Iterator<Page<T>> iterator = table.query(enhancedRequest).iterator();
@@ -125,6 +129,27 @@ public class DynamoDbRepository {
     }
 
     return result;
+  }
+
+  public <T extends DynamoDbEntity> List<T> findManyItems(Collection<T> items) {
+    List<T> itemList = new ArrayList<>(items);
+    DynamoDbTable<T> table = this.getTable(itemList.get(0), enhancedClient, dynamoConfiguration);
+
+    BatchGetItemEnhancedRequest.Builder builder = BatchGetItemEnhancedRequest.builder();
+
+    for (T item : items) {
+      Class<T> clazz = (Class<T>) item.getClass();
+      builder.addReadBatch(ReadBatch.builder(clazz).addGetItem(item).build());
+    }
+
+    Iterator<BatchGetResultPage> iterator = enhancedClient.batchGetItem(builder.build()).iterator();
+//    while(iterator.hasNext()) {
+//      iterator.next().
+//    }
+
+    return null;
+
+
   }
 
 

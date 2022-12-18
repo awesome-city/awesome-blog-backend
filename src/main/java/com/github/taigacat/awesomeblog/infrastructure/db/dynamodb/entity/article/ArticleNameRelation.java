@@ -1,5 +1,6 @@
 package com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.article;
 
+import com.github.taigacat.awesomeblog.domain.entity.Article;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.DynamoDbSupport;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.DynamoDbTableType;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.DynamoDbEntity;
@@ -23,15 +24,18 @@ public class ArticleNameRelation implements DynamoDbEntity {
 
   private String name;
 
+  private Article.Status status;
+
   public ArticleNameRelation(String tenant, String name) {
     this.tenant = tenant;
     this.name = name;
   }
 
-  public ArticleNameRelation(ArticleObject object) {
+  public ArticleNameRelation(Article object) {
     this.tenant = object.getTenant();
     this.id = object.getId();
     this.name = object.getName();
+    this.status = object.getStatus();
   }
 
   @Override
@@ -44,8 +48,7 @@ public class ArticleNameRelation implements DynamoDbEntity {
   public String getHashKey() {
     return DynamoDbSupport.createHashKeyValue(
         "Article-name",
-        "tenant", this.getTenant(),
-        "name", this.getName()
+        "tenant", this.getTenant()
     );
   }
 
@@ -53,7 +56,7 @@ public class ArticleNameRelation implements DynamoDbEntity {
   @DynamoDbSortKey
   public String getRangeKey() {
     return DynamoDbSupport.createRangeKeyValue(
-        "id", this.getId()
+        "name", this.getName()
     );
   }
 

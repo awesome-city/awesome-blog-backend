@@ -27,7 +27,8 @@ public class ArticleController {
   @Get
   public PagingEntity<Article> getArticles() {
     LOGGER.info("in");
-    PagingEntity<Article> result = repository.findAll("tenant_TODO", Article.Status.PUBLISHED, 100);
+    PagingEntity<Article> result = repository.findAll("tenant_TODO", Article.Status.PUBLISHED, 100,
+        null);
     LOGGER.info("out");
     return result;
   }
