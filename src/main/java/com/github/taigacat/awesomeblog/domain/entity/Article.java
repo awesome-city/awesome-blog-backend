@@ -6,16 +6,12 @@ import io.micronaut.core.annotation.NonNull;
 import java.time.Instant;
 import java.util.Set;
 import javax.validation.constraints.NotBlank;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-@Introspected
-@Data
 @EqualsAndHashCode
 @ToString(callSuper = true)
-@NoArgsConstructor
+@Introspected
 public class Article implements Identified {
 
   @NonNull
@@ -100,17 +96,135 @@ public class Article implements Identified {
     DRAFT
   }
 
+  @NonNull
+  public String getTenant() {
+    return tenant;
+  }
+
+  public void setTenant(@NonNull String tenant) {
+    this.tenant = tenant;
+  }
+
+  @Override
+  @NonNull
+  public String getId() {
+    return id;
+  }
+
+  public void setId(@NonNull String id) {
+    this.id = id;
+  }
+
+  @NonNull
+  public String getName() {
+    return name;
+  }
+
+  public void setName(@NonNull String name) {
+    this.name = name;
+  }
+
+  public String getTitle() {
+    return title;
+  }
+
+  public void setTitle(String title) {
+    this.title = title;
+  }
+
+  public Set<String> getTags() {
+    return tags;
+  }
+
+  public void setTags(Set<String> tags) {
+    this.tags = tags;
+  }
+
+  public Status getStatus() {
+    return status;
+  }
+
+  public void setStatus(Status status) {
+    this.status = status;
+  }
+
+  public String getAuthorId() {
+    return authorId;
+  }
+
+  public void setAuthorId(String authorId) {
+    this.authorId = authorId;
+  }
+
+  public String getSummary() {
+    return summary;
+  }
+
+  public void setSummary(String summary) {
+    this.summary = summary;
+  }
+
+  public String getBody() {
+    return body;
+  }
+
+  public void setBody(String body) {
+    this.body = body;
+  }
+
+  public String getThumbnailUrl() {
+    return thumbnailUrl;
+  }
+
+  public void setThumbnailUrl(String thumbnailUrl) {
+    this.thumbnailUrl = thumbnailUrl;
+  }
+
+  public String getCoverImageUrl() {
+    return coverImageUrl;
+  }
+
+  public void setCoverImageUrl(String coverImageUrl) {
+    this.coverImageUrl = coverImageUrl;
+  }
+
+  public Instant getPublishAt() {
+    return publishAt;
+  }
+
+  public void setPublishAt(Instant publishAt) {
+    this.publishAt = publishAt;
+  }
+
+  public Instant getCreateAt() {
+    return createAt;
+  }
+
+  public void setCreateAt(Instant createAt) {
+    this.createAt = createAt;
+  }
+
+  public Instant getModifyAt() {
+    return modifyAt;
+  }
+
+  public void setModifyAt(Instant modifyAt) {
+    this.modifyAt = modifyAt;
+  }
+
   public static class Builder {
 
     private String tenant;
     private Status status;
     private String id;
+    private String name;
 
     public Article build() {
       Article article = new Article();
       article.tenant = tenant;
       article.status = status;
       article.id = id;
+      article.name = name;
       return article;
     }
 
@@ -124,9 +238,15 @@ public class Article implements Identified {
       return this;
     }
 
+    public Builder name(String name) {
+      this.name = name;
+      return this;
+    }
+
     public Builder id(String id) {
       this.id = id;
       return this;
     }
   }
 }
+

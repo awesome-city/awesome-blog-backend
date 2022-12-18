@@ -145,6 +145,10 @@ public class DynamoDbRepository {
   public <T extends DynamoDbEntity> void putItem(T entity) {
     DynamoDbTable<T> table = this.getTable(entity, enhancedClient, dynamoConfiguration);
 
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug(String.format("putItem [ item = %s]", entity));
+    }
+
     try {
       table.putItem(entity);
     } catch (DynamoDbException e) {

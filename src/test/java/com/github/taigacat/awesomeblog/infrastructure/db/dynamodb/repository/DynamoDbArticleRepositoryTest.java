@@ -39,7 +39,7 @@ class DynamoDbArticleRepositoryTest {
 
     LOGGER.info("articles is 1");
     repository.create(
-        new Article.Builder().status(Status.PUBLISHED).tenant(tenantId).build()
+        new Article.Builder().status(Status.PUBLISHED).tenant(tenantId).name("hoge").build()
     );
     PagingEntity<Article> result = repository.findAll(tenantId, Status.PUBLISHED, 1000);
     assertNotNull(result.getList());
