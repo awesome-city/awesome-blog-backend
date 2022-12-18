@@ -6,11 +6,11 @@ import java.util.Optional;
 
 public interface ArticleRepository {
 
-  PagingEntity<Article> findAll(Integer limit);
+  PagingEntity<Article> findAll(Article.Status status, Integer limit);
 
-  PagingEntity<Article> findAll(Integer limit, String nextPageToken);
+  PagingEntity<Article> findAll(Article.Status status, Integer limit, String nextPageToken);
 
-  Optional<Article> findById(String id);
+  Optional<Article> findById(Article.Status status, String id);
 
   Optional<Article> findByName(String name);
 

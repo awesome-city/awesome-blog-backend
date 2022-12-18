@@ -7,12 +7,23 @@ import java.util.Set;
 import javax.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @Data
 @EqualsAndHashCode
-@ToString
+@ToString(callSuper = true)
+@NoArgsConstructor
 public class Article implements Identified {
+
+  public Article(Status status) {
+    this.status = status;
+  }
+
+  public Article(Status status, String id) {
+    this(status);
+    this.id = id;
+  }
 
   /**
    * 記事ID

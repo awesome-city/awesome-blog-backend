@@ -17,24 +17,24 @@ import org.slf4j.LoggerFactory;
 @Controller("/articles")
 public class ArticleController {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(ArticleController.class);
-	private final ArticleRepository repository;
+  private static final Logger LOGGER = LoggerFactory.getLogger(ArticleController.class);
+  private final ArticleRepository repository;
 
-	public ArticleController(ArticleRepository articleRepository) {
-		this.repository = articleRepository;
-	}
+  public ArticleController(ArticleRepository articleRepository) {
+    this.repository = articleRepository;
+  }
 
-	@Get
-	public PagingEntity<Article> getArticles() {
-		LOGGER.info("in");
-		PagingEntity<Article> result = repository.findAll(100);
-		LOGGER.info("out");
-		return result;
-	}
+  @Get
+  public PagingEntity<Article> getArticles() {
+    LOGGER.info("in");
+    PagingEntity<Article> result = repository.findAll(Article.Status.PUBLISHED, 100);
+    LOGGER.info("out");
+    return result;
+  }
 
-	@Delete("/{id}")
-	@Status(HttpStatus.NO_CONTENT)
-	public void delete(@PathVariable @NonNull @NotBlank String id) {
-		repository.delete(id);
-	}
+  @Delete("/{id}")
+  @Status(HttpStatus.NO_CONTENT)
+  public void delete(@PathVariable @NonNull @NotBlank String id) {
+    repository.delete(id);
+  }
 }

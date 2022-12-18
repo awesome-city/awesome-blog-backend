@@ -1,16 +1,13 @@
 package com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.article;
 
 import com.github.taigacat.awesomeblog.domain.entity.Article;
-import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.DynamoDbConfiguration;
-import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.KeyAttribute;
+import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.DynamoDbSupport;
+import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.DynamoDbTableType;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.DynamoDbEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.StaticAttributeTags;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbIgnore;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
@@ -19,17 +16,16 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortK
 @DynamoDbBean
 @Data
 @EqualsAndHashCode(callSuper = true)
-@ToString
-public class ArticleObject extends Article implements
-    DynamoDbEntity<ArticleObject> {
+@ToString(callSuper = true)
+@NoArgsConstructor
+public class ArticleObject extends Article implements DynamoDbEntity {
 
-  public ArticleObject() {
-    super();
+  public ArticleObject(Article.Status status) {
+    super(status);
   }
 
-  public ArticleObject(String id) {
-    super();
-    this.setId(id);
+  public ArticleObject(Article.Status status, String id) {
+    super(status, id);
   }
 
   public static ArticleObject fromArticle(Article article) {
@@ -39,24 +35,33 @@ public class ArticleObject extends Article implements
   }
 
   @Override
-  public String getObjectName() {
-    return "Article";
+  public DynamoDbTableType getTableType() {
+    return DynamoDbTableType.OBJECT_TABLE;
   }
 
   @Override
   @DynamoDbPartitionKey
   public String getHashKey() {
-    return this.createHashKeyValue(
-        new KeyAttribute("status", this.getStatus().name().toLowerCase())
+    return DynamoDbSupport.createHashKeyValue(
+        "Article",
+        "status", getStatus().name().toLowerCase()
     );
   }
 
   @Override
   @DynamoDbSortKey
   public String getRangeKey() {
-    return this.createRangeKeyValue(
-        new KeyAttribute("id", getId())
+    return DynamoDbSupport.createRangeKeyValue(
+        "id", getId()
     );
+  }
+
+  @Override
+  public void setHashKey(String hashKey) {
+  }
+
+  @Override
+  public void setRangeKey(String rangeKey) {
   }
 
   @Override
@@ -79,27 +84,4 @@ public class ArticleObject extends Article implements
     this.setStatus(Article.Status.valueOf(status.toUpperCase()));
   }
 
-  @Override
-  public DynamoDbTable<ArticleObject> getTable(
-      DynamoDbEnhancedClient enhancedClient,
-      DynamoDbConfiguration dynamoDbConfiguration
-  ) {
-    TableSchema<ArticleObject> tableSchema = TableSchema.builder(
-            ArticleObject.class)
-        .newItemSupplier(ArticleObject::new)
-        .addAttribute(String.class, attr -> attr.name(HASH_KEY)
-            .getter(ArticleObject::getHashKey)
-            .setter(ArticleObject::setHashKey)
-            .tags(StaticAttributeTags.primaryPartitionKey()))
-        .addAttribute(String.class, attr -> attr.name(RANGE_KEY)
-            .getter(ArticleObject::getRangeKey)
-            .setter(ArticleObject::setHashKey)
-            .tags(StaticAttributeTags.primarySortKey()))
-        .build();
-
-    return enhancedClient.table(
-        dynamoDbConfiguration.getObjectTableName(),
-        tableSchema
-    );
-  }
 }

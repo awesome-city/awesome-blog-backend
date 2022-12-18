@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
@@ -85,7 +86,7 @@ public class DynamoDbRepository {
     }
   }
 
-  public <T extends DynamoDbEntity<T>> PagingEntity<T> findAll(T tableSchema,
+  public <T extends DynamoDbEntity> PagingEntity<T> findAll(T tableSchema,
       @Nullable Integer limit,
       @Nullable String nextPageToken) {
     DynamoDbTable<T> table = this.getTable(tableSchema, enhancedClient, dynamoConfiguration);
@@ -117,11 +118,17 @@ public class DynamoDbRepository {
 
     String newNextPageToken = nextPageToken(lastEvaluatedKey).orElse(null);
 
-    return new PagingEntity<>(items, newNextPageToken);
+    PagingEntity<T> result = new PagingEntity<>(items, newNextPageToken);
+
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("findAll " + result);
+    }
+
+    return result;
   }
 
 
-  public <T extends DynamoDbEntity<T>> Optional<T> findOne(T condition) {
+  public <T extends DynamoDbEntity> Optional<T> findItem(T condition) {
     DynamoDbTable<T> table = this.getTable(condition, enhancedClient, dynamoConfiguration);
 
     try {
@@ -135,7 +142,7 @@ public class DynamoDbRepository {
     }
   }
 
-  public <T extends DynamoDbEntity<T>> void put(T entity) {
+  public <T extends DynamoDbEntity> void putItem(T entity) {
     DynamoDbTable<T> table = this.getTable(entity, enhancedClient, dynamoConfiguration);
 
     try {
@@ -145,7 +152,7 @@ public class DynamoDbRepository {
     }
   }
 
-  public <T extends DynamoDbEntity<T>> Optional<T> update(T entity) {
+  public <T extends DynamoDbEntity> Optional<T> updateItem(T entity) {
     DynamoDbTable<T> table = this.getTable(entity, enhancedClient, dynamoConfiguration);
 
     try {
@@ -157,7 +164,7 @@ public class DynamoDbRepository {
     }
   }
 
-  public <T extends DynamoDbEntity<T>> Optional<T> delete(T entity) {
+  public <T extends DynamoDbEntity> Optional<T> deleteItem(T entity) {
     DynamoDbTable<T> table = this.getTable(entity, enhancedClient, dynamoConfiguration);
 
     try {
@@ -169,13 +176,16 @@ public class DynamoDbRepository {
     }
   }
 
-  private <T extends DynamoDbEntity<T>> DynamoDbTable<T> getTable(T tableSchema,
+  private <T extends DynamoDbEntity> DynamoDbTable<T> getTable(T tableSchema,
       DynamoDbEnhancedClient enhancedClient,
       DynamoDbConfiguration dynamoConfiguration) {
-    @SuppressWarnings("unchecked")
-    DynamoDbTable<T> table = (DynamoDbTable<T>) tableSchema.getTable(
-        enhancedClient, dynamoConfiguration);
-    return table;
+    @SuppressWarnings("unchecked ")
+    Class<T> clazz = (Class<T>) tableSchema.getClass();
+    TableSchema<T> schema = TableSchema.fromBean(clazz);
+    return enhancedClient.table(
+        tableSchema.getTableType().getTableName(dynamoConfiguration),
+        schema
+    );
   }
 
   @NonNull

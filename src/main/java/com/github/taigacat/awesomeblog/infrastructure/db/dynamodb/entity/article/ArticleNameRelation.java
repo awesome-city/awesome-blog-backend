@@ -1,29 +1,23 @@
 package com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.article;
 
-import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.DynamoDbConfiguration;
-import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.KeyAttribute;
+import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.DynamoDbSupport;
+import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.DynamoDbTableType;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.DynamoDbEntity;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.StaticAttributeTags;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbIgnore;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey;
 
 @DynamoDbBean
 @EqualsAndHashCode
 @ToString
-public class ArticleNameRelation implements DynamoDbEntity<ArticleNameRelation> {
+@Data
+public class ArticleNameRelation implements DynamoDbEntity {
 
-  @Setter
-  @Getter
   private String id;
 
-  @Setter
   private String name;
 
   public ArticleNameRelation() {
@@ -43,47 +37,36 @@ public class ArticleNameRelation implements DynamoDbEntity<ArticleNameRelation> 
     return relation;
   }
 
-  @DynamoDbIgnore
-  public String getName() {
-    return name;
+  @Override
+  public DynamoDbTableType getTableType() {
+    return DynamoDbTableType.RELATION_TABLE;
   }
 
   @Override
-  public String getObjectName() {
-    return "Article-name";
-  }
-
-  @Override
+  @DynamoDbPartitionKey
   public String getHashKey() {
-    return this.createHashKeyValue(
-        new KeyAttribute("name", this.getName())
+    return DynamoDbSupport.createHashKeyValue(
+        "Article-name",
+        "name", this.getName()
     );
   }
 
   @Override
+  @DynamoDbSortKey
   public String getRangeKey() {
-    return this.createRangeKeyValue();
+    return DynamoDbSupport.createRangeKeyValue(
+        "id", this.getId()
+    );
   }
 
   @Override
-  public DynamoDbTable<ArticleNameRelation> getTable(DynamoDbEnhancedClient enhancedClient,
-      DynamoDbConfiguration dynamoDbConfiguration) {
-    TableSchema<ArticleNameRelation> tableSchema = TableSchema.builder(
-            ArticleNameRelation.class)
-        .newItemSupplier(ArticleNameRelation::new)
-        .addAttribute(String.class, attr -> attr.name(HASH_KEY)
-            .getter(ArticleNameRelation::getHashKey)
-            .setter(ArticleNameRelation::setHashKey)
-            .tags(StaticAttributeTags.primaryPartitionKey()))
-        .addAttribute(String.class, attr -> attr.name(RANGE_KEY)
-            .getter(ArticleNameRelation::getRangeKey)
-            .setter(ArticleNameRelation::setHashKey)
-            .tags(StaticAttributeTags.primarySortKey()))
-        .build();
+  public void setHashKey(String hashKey) {
 
-    return enhancedClient.table(
-        dynamoDbConfiguration.getRelationTableName(),
-        tableSchema
-    );
   }
+
+  @Override
+  public void setRangeKey(String rangeKey) {
+
+  }
+
 }
