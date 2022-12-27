@@ -50,7 +50,7 @@ class DynamoDbArticleRepositoryTest {
             .author("taigacat").build()
     );
 
-    var result = repository.findById(tenantId, Status.PUBLISHED, article.getId());
+    var result = repository.findById(tenantId, article.getId());
     assertTrue(result.isPresent());
     var articleResult = result.get();
     assertEquals(tenantId, articleResult.getTenant());

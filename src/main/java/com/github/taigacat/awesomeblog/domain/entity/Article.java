@@ -4,6 +4,7 @@ import com.github.taigacat.awesomeblog.domain.common.Identified;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Set;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
@@ -98,8 +99,21 @@ public class Article implements Identified {
    */
   @Introspected
   public enum Status {
-    PUBLISHED,
-    DRAFT
+    PUBLISHED("published"),
+    DRAFT("draft");
+
+    private final String name;
+
+    Status(final String name) {
+      this.name = name;
+    }
+
+    public static Status byName(String name) {
+      return Arrays.stream(Status.values())
+          .filter(s -> s.name.equals(name))
+          .findAny()
+          .orElse(null);
+    }
   }
 
   @NonNull

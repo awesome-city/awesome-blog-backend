@@ -6,6 +6,7 @@ import com.github.taigacat.awesomeblog.domain.entity.Article.Status;
 import com.github.taigacat.awesomeblog.domain.repository.ArticleRepository;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.DynamoDbConfiguration;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.article.ArticleAuthorRelation;
+import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.article.ArticleIdRelation;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.article.ArticleNameRelation;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.article.ArticleObject;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.article.ArticleTagRelation;
@@ -60,12 +61,22 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
 
   @Override
   @Log
-  public Optional<Article> findById(@NonNull String tenant, @NonNull Article.Status status,
-      @NonNull String id) {
+  public Optional<Article> findById(
+      @NonNull String tenant,
+      @NonNull String id
+  ) {
     LOGGER.debug("find article by id [id = " + id + "]");
-    Optional<ArticleObject> object = findItem(ArticleObject.of(
-        new Article.Builder().tenant(tenant).status(status).id(id).build()
-    ));
+    Optional<ArticleIdRelation> idRelation = findItem(new ArticleIdRelation(tenant, id));
+
+    Optional<ArticleObject> object = idRelation
+        .flatMap(r -> findItem(ArticleObject.of(
+            new Article.Builder()
+                .tenant(r.getTenant())
+                .status(r.getStatus())
+                .id(r.getId())
+                .build()
+        )));
+
     if (object.isPresent()) {
       LOGGER.info("article found [id = " + object.get().getId() + "]");
     } else {
@@ -83,7 +94,7 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
     if (relation.isPresent()) {
       ArticleNameRelation r = relation.get();
       LOGGER.info("relation found [id = " + r.getId() + "]");
-      return this.findById(tenant, r.getStatus(), r.getId());
+      return this.findById(tenant, r.getId());
     } else {
       LOGGER.info("relation not found");
       return Optional.empty();
@@ -151,7 +162,7 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
   public Article save(Article article) {
     Article old = null;
     if (article.getId() != null && !article.getId().isEmpty()) {
-      var saved = findById(article.getTenant(), article.getStatus(), article.getId());
+      var saved = findById(article.getTenant(), article.getId());
       if (saved.isPresent()) {
         old = saved.get();
       }
@@ -162,6 +173,9 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
     object.setId(idGenerator.generate());
     LOGGER.info("put article entity [ id = " + object.getId() + "]");
     putItem(object);
+
+    // Relation - id
+    putItem(new ArticleIdRelation(object));
 
     // Relation - name
     if (old != null && !article.getName().equals(old.getName())) {
@@ -200,6 +214,9 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
   @Override
   public void delete(String tenant, String id) {
     Consumer<ArticleObject> deleteRelations = (article) -> {
+      // ArticleId
+      deleteItem(new ArticleIdRelation(article));
+
       // ArticleName
       deleteItem(new ArticleNameRelation(article));
 
@@ -212,14 +229,11 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
       deleteItem(new ArticleAuthorRelation(article));
     };
 
-    this.findById(tenant, Status.PUBLISHED, id)
-        .ifPresentOrElse(
+    this.findById(tenant, id)
+        .ifPresent(
             article -> deleteItem(ArticleObject.of(
                 new Article.Builder().tenant(tenant).status(Status.PUBLISHED).id(id).build()
-            )).ifPresent(deleteRelations),
-            () -> deleteItem(ArticleObject.of(
-                new Article.Builder().tenant(tenant).status(Status.DRAFT).id(id).build()
-            )).ifPresent(deleteRelations)
+            ))
         );
   }
 }

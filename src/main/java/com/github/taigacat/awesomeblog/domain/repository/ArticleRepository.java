@@ -16,7 +16,6 @@ public interface ArticleRepository {
 
   Optional<Article> findById(
       @NonNull String tenant,
-      @NonNull Article.Status status,
       @NonNull String id
   );
 
@@ -48,4 +47,3 @@ public interface ArticleRepository {
       @NonNull String id
   );
 }
-
