@@ -32,7 +32,7 @@ class DynamoDbArticleRepositoryTest {
     assertEquals(0, result0.getList().size());
 
     LOGGER.info("articles is 1");
-    var article1 = repository.save(
+    var article1 = repository.create(
         new Article.Builder().status(Status.PUBLISHED).tenant(tenantId).name("hoge")
             .author("taigacat").build()
     );
@@ -45,7 +45,7 @@ class DynamoDbArticleRepositoryTest {
   @Test
   void test_findById() {
     var tenantId = "test_findById";
-    var article = repository.save(
+    var article = repository.create(
         new Article.Builder().status(Status.PUBLISHED).tenant(tenantId).name("hoge")
             .author("taigacat").build()
     );
@@ -61,7 +61,7 @@ class DynamoDbArticleRepositoryTest {
   @Test
   void test_findByName() {
     var tenantId = "test_findByName";
-    var article = repository.save(
+    var article = repository.create(
         new Article.Builder().status(Status.PUBLISHED).tenant(tenantId).name("hoge")
             .author("taigacat").build()
     );
@@ -76,7 +76,7 @@ class DynamoDbArticleRepositoryTest {
   @Test
   void test_findByTag() {
     var tenantId = "test_findByTag";
-    repository.save(
+    repository.create(
         new Article.Builder()
             .status(Status.PUBLISHED)
             .tenant(tenantId)
@@ -85,7 +85,7 @@ class DynamoDbArticleRepositoryTest {
             .tags(Set.of("tagA", "tagB"))
             .build()
     );
-    repository.save(
+    repository.create(
         new Article.Builder()
             .status(Status.PUBLISHED)
             .tenant(tenantId)
@@ -124,7 +124,7 @@ class DynamoDbArticleRepositoryTest {
   @Test
   void test_findByAuthor() {
     var tenantId = "test_findByAuthor";
-    repository.save(
+    repository.create(
         new Article.Builder()
             .status(Status.PUBLISHED)
             .tenant(tenantId)
@@ -133,7 +133,7 @@ class DynamoDbArticleRepositoryTest {
             .tags(Set.of("tagA", "tagB"))
             .build()
     );
-    repository.save(
+    repository.create(
         new Article.Builder()
             .status(Status.PUBLISHED)
             .tenant(tenantId)

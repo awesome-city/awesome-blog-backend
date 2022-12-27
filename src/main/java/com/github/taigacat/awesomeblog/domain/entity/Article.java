@@ -3,6 +3,7 @@ package com.github.taigacat.awesomeblog.domain.entity;
 import com.github.taigacat.awesomeblog.domain.common.Identified;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Set;
@@ -23,8 +24,7 @@ public class Article implements Identified {
   /**
    * 記事ID
    */
-  @NonNull
-  @NotBlank
+  @Nullable
   private String id;
 
   /**

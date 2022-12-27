@@ -164,7 +164,12 @@ class ArticleControllerTest {
     }
 
     @Override
-    public Article save(Article article) {
+    public Article create(Article article) {
+      return article;
+    }
+
+    @Override
+    public Article update(Article article) {
       return article;
     }
 
