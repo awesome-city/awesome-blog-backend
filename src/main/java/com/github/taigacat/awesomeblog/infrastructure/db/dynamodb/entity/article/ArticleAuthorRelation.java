@@ -24,21 +24,34 @@ public class ArticleAuthorRelation implements DynamoDbEntity {
 
   private String authorId;
 
-  public ArticleAuthorRelation(String tenant, String authorId) {
+  private Article.Status status;
+
+  public ArticleAuthorRelation(String tenant, Article.Status status, String authorId) {
     this.tenant = tenant;
+    this.status = status;
     this.authorId = authorId;
   }
 
-  public ArticleAuthorRelation(String tenant, String authorId, String id) {
+  public ArticleAuthorRelation(String tenant, Article.Status status, String authorId, String id) {
     this.tenant = tenant;
+    this.status = status;
     this.authorId = authorId;
     this.id = id;
   }
 
   public ArticleAuthorRelation(Article object) {
     this.tenant = object.getTenant();
+    this.status = object.getStatus();
     this.authorId = object.getAuthorId();
     this.id = object.getId();
+  }
+
+  public ArticleObject toArticle() {
+    ArticleObject object = new ArticleObject();
+    object.setTenant(tenant);
+    object.setStatus(status);
+    object.setId(id);
+    return object;
   }
 
   @Override

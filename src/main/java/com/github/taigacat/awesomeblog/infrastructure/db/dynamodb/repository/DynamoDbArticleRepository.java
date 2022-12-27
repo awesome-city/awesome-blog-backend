@@ -11,6 +11,7 @@ import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.article
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.article.ArticleTagRelation;
 import com.github.taigacat.awesomeblog.util.CollectionUtils;
 import com.github.taigacat.awesomeblog.util.JsonMapper;
+import com.github.taigacat.awesomeblog.util.aspect.Log;
 import com.github.taigacat.awesomeblog.util.id.IdGenerator;
 import io.micronaut.core.annotation.NonNull;
 import jakarta.inject.Singleton;
@@ -40,16 +41,15 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
   }
 
   @Override
+  @Log
   public PagingEntity<Article> findAll(String tenant, Article.Status status, Integer limit,
       String nextPageToken) {
-    LOGGER.info("in");
     PagingEntity<ArticleObject> dynamoEntity = findAllItems(
         ArticleObject.of(new Article.Builder().tenant(tenant).status(status).build()),
         limit,
         nextPageToken
     );
 
-    LOGGER.info("out");
     return new PagingEntity<>(
         dynamoEntity.getList().stream()
             .map(e -> (Article) e)
@@ -59,9 +59,9 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
   }
 
   @Override
+  @Log
   public Optional<Article> findById(@NonNull String tenant, @NonNull Article.Status status,
       @NonNull String id) {
-    LOGGER.info("in");
     LOGGER.debug("find article by id [id = " + id + "]");
     Optional<ArticleObject> object = findItem(ArticleObject.of(
         new Article.Builder().tenant(tenant).status(status).id(id).build()
@@ -71,11 +71,11 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
     } else {
       LOGGER.info("article not found");
     }
-    LOGGER.info("out");
     return object.map(e -> e);
   }
 
   @Override
+  @Log
   public Optional<Article> findByName(String tenant, String name) {
     LOGGER.debug("find article by name [name = " + name + "]");
     ArticleNameRelation articleNameRelation = new ArticleNameRelation(tenant, name);
@@ -91,6 +91,7 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
   }
 
   @Override
+  @Log
   public PagingEntity<Article> findByTag(
       String tenant,
       Status status,
@@ -113,16 +114,41 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
   }
 
   @Override
-  public PagingEntity<Article> findByAuthor(String tenant, Status status, String authorId,
+  @Log
+  public PagingEntity<Article> findByAuthor(
+      String tenant,
+      Status status,
+      String authorId,
       Integer limit,
-      String nextPageToken) {
-    throw new RuntimeException();
+      String nextPageToken
+  ) {
+    LOGGER.debug("find articles by author [author = " + authorId + "]");
+    ArticleAuthorRelation articleAuthorRelation = new ArticleAuthorRelation(
+        tenant,
+        status,
+        authorId
+    );
+    PagingEntity<ArticleAuthorRelation> authorEntities = findAllItems(
+        articleAuthorRelation,
+        limit,
+        nextPageToken
+    );
+
+    List<ArticleObject> result = this.findManyItems(
+        authorEntities.getList().stream()
+            .map(ArticleAuthorRelation::toArticle)
+            .toList()
+    );
+
+    return new PagingEntity<>(
+        result.stream().map(object -> (Article) object).toList(),
+        authorEntities.getNextPageToken()
+    );
   }
 
   @Override
+  @Log
   public Article save(Article article) {
-    LOGGER.info("in");
-
     Article old = null;
     if (article.getId() != null && !article.getId().isEmpty()) {
       var saved = findById(article.getTenant(), article.getStatus(), article.getId());
@@ -168,14 +194,11 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
     }
     putItem(new ArticleAuthorRelation(object));
 
-    LOGGER.info("out");
     return object;
   }
 
   @Override
   public void delete(String tenant, String id) {
-    LOGGER.info("in");
-
     Consumer<ArticleObject> deleteRelations = (article) -> {
       // ArticleName
       deleteItem(new ArticleNameRelation(article));
@@ -198,6 +221,5 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
                 new Article.Builder().tenant(tenant).status(Status.DRAFT).id(id).build()
             )).ifPresent(deleteRelations)
         );
-    LOGGER.info("out");
   }
 }

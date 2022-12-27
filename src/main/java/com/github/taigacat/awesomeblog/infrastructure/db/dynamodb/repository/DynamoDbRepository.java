@@ -8,6 +8,7 @@ import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.DynamoD
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.DynamoDbTableType;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.DynamoDbEntity;
 import com.github.taigacat.awesomeblog.util.JsonMapper;
+import com.github.taigacat.awesomeblog.util.aspect.Log;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.NonNull;
@@ -98,6 +99,7 @@ public class DynamoDbRepository {
     }
   }
 
+  @Log
   public <T extends DynamoDbEntity> PagingEntity<T> findAllItems(T tableSchema,
       @Nullable Integer limit,
       @Nullable String nextPageToken) {
@@ -148,6 +150,7 @@ public class DynamoDbRepository {
     return result;
   }
 
+  @Log
   public <T extends DynamoDbEntity> List<T> findManyItems(Collection<T> items) {
     List<T> itemList = new ArrayList<>(items);
     T bean = itemList.get(0);
@@ -162,6 +165,7 @@ public class DynamoDbRepository {
     return findManyItems(keys, bean);
   }
 
+  @Log
   public <T extends DynamoDbEntity> List<T> findManyItems(List<Key> keys, T schemaBean) {
     @SuppressWarnings("unchecked")
     Class<T> clazz = (Class<T>) schemaBean.getClass();
@@ -190,7 +194,7 @@ public class DynamoDbRepository {
     return result;
   }
 
-
+  @Log
   public <T extends DynamoDbEntity> Optional<T> findItem(T condition) {
     DynamoDbTable<T> table = this.getTable(condition, enhancedClient, dynamoConfiguration);
 
@@ -205,6 +209,7 @@ public class DynamoDbRepository {
     }
   }
 
+  @Log
   public <T extends DynamoDbEntity> void putItem(T entity) {
     DynamoDbTable<T> table = this.getTable(entity, enhancedClient, dynamoConfiguration);
 
@@ -219,6 +224,7 @@ public class DynamoDbRepository {
     }
   }
 
+  @Log
   public <T extends DynamoDbEntity> Optional<T> updateItem(T entity) {
     DynamoDbTable<T> table = this.getTable(entity, enhancedClient, dynamoConfiguration);
 
@@ -231,6 +237,7 @@ public class DynamoDbRepository {
     }
   }
 
+  @Log
   public <T extends DynamoDbEntity> Optional<T> deleteItem(T entity) {
     DynamoDbTable<T> table = this.getTable(entity, enhancedClient, dynamoConfiguration);
 

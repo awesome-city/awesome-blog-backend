@@ -120,4 +120,52 @@ class DynamoDbArticleRepositoryTest {
     Article article_next = nextResult.getList().get(0);
     assertEquals(tenantId, article_next.getTenant());
   }
+
+  @Test
+  void test_findByAuthor() {
+    var tenantId = "test_findByAuthor";
+    repository.save(
+        new Article.Builder()
+            .status(Status.PUBLISHED)
+            .tenant(tenantId)
+            .name("hoge1")
+            .author("taigacat")
+            .tags(Set.of("tagA", "tagB"))
+            .build()
+    );
+    repository.save(
+        new Article.Builder()
+            .status(Status.PUBLISHED)
+            .tenant(tenantId)
+            .name("hoge2")
+            .author("taigacat")
+            .tags(Set.of("tagA", "tagB"))
+            .build()
+    );
+
+    // ALL
+    var result = repository.findByAuthor(tenantId, Status.PUBLISHED, "taigacat", 2, null);
+    assertNotNull(result);
+    assertNotNull(result.getList());
+    assertEquals(2, result.getList().size());
+    Article article_all = result.getList().get(0);
+    assertEquals(tenantId, article_all.getTenant());
+
+    // PARTIAL
+    var partialResult = repository.findByAuthor(tenantId, Status.PUBLISHED, "taigacat", 1, null);
+    assertNotNull(partialResult);
+    assertNotNull(partialResult.getList());
+    assertEquals(1, partialResult.getList().size());
+    Article article_partial = partialResult.getList().get(0);
+    assertEquals(tenantId, article_partial.getTenant());
+
+    // NEXT
+    var nextResult = repository.findByAuthor(tenantId, Status.PUBLISHED, "taigacat", 100,
+        partialResult.getNextPageToken());
+    assertNotNull(nextResult);
+    assertNotNull(nextResult.getList());
+    assertEquals(1, nextResult.getList().size());
+    Article article_next = nextResult.getList().get(0);
+    assertEquals(tenantId, article_next.getTenant());
+  }
 }
