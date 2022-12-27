@@ -9,6 +9,7 @@ import com.github.taigacat.awesomeblog.domain.entity.Article;
 import com.github.taigacat.awesomeblog.domain.entity.Article.Status;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,5 +71,53 @@ class DynamoDbArticleRepositoryTest {
     assertEquals(tenantId, articleResult.getTenant());
     assertEquals("hoge", articleResult.getName());
     assertEquals(Status.PUBLISHED, articleResult.getStatus());
+  }
+
+  @Test
+  void test_findByTag() {
+    var tenantId = "test_findByTag";
+    repository.save(
+        new Article.Builder()
+            .status(Status.PUBLISHED)
+            .tenant(tenantId)
+            .name("hoge1")
+            .author("taigacat")
+            .tags(Set.of("tagA", "tagB"))
+            .build()
+    );
+    repository.save(
+        new Article.Builder()
+            .status(Status.PUBLISHED)
+            .tenant(tenantId)
+            .name("hoge2")
+            .author("taigacat")
+            .tags(Set.of("tagA", "tagB"))
+            .build()
+    );
+
+    // ALL
+    var result = repository.findByTag(tenantId, Status.PUBLISHED, "tagA", 2, null);
+    assertNotNull(result);
+    assertNotNull(result.getList());
+    assertEquals(2, result.getList().size());
+    Article article_all = result.getList().get(0);
+    assertEquals(tenantId, article_all.getTenant());
+
+    // PARTIAL
+    var partialResult = repository.findByTag(tenantId, Status.PUBLISHED, "tagA", 1, null);
+    assertNotNull(partialResult);
+    assertNotNull(partialResult.getList());
+    assertEquals(1, partialResult.getList().size());
+    Article article_partial = partialResult.getList().get(0);
+    assertEquals(tenantId, article_partial.getTenant());
+
+    // NEXT
+    var nextResult = repository.findByTag(tenantId, Status.PUBLISHED, "tagA", 100,
+        partialResult.getNextPageToken());
+    assertNotNull(nextResult);
+    assertNotNull(nextResult.getList());
+    assertEquals(1, nextResult.getList().size());
+    Article article_next = nextResult.getList().get(0);
+    assertEquals(tenantId, article_next.getTenant());
   }
 }

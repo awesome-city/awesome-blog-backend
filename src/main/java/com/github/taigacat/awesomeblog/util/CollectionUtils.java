@@ -5,7 +5,7 @@ import java.util.Set;
 
 public class CollectionUtils {
 
-  public static <T> Set<T> setDifference(Set<T> a, Set<T> b) {
+  public static <T> Set<T> differenceSet(Set<T> a, Set<T> b) {
     if (a == null) {
       a = new HashSet<>();
     }

@@ -1,6 +1,7 @@
 package com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.article;
 
 import com.github.taigacat.awesomeblog.domain.entity.Article;
+import com.github.taigacat.awesomeblog.domain.entity.Article.Status;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.DynamoDbSupport;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.DynamoDbTableType;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.DynamoDbEntity;
@@ -25,15 +26,19 @@ public class ArticleTagRelation implements DynamoDbEntity {
   private String tenant;
   private String id;
 
+  private Status status;
+
   private String tagId;
 
-  public ArticleTagRelation(String tenant, String tagId) {
+  public ArticleTagRelation(String tenant, Status status, String tagId) {
     this.tenant = tenant;
+    this.status = status;
     this.tagId = tagId;
   }
 
-  public ArticleTagRelation(String tenant, String tagId, String id) {
+  public ArticleTagRelation(String tenant, Status status, String tagId, String id) {
     this.tenant = tenant;
+    this.status = status;
     this.tagId = tagId;
     this.id = id;
   }
@@ -43,13 +48,25 @@ public class ArticleTagRelation implements DynamoDbEntity {
     Set<ArticleTagRelation> tagRelations = new HashSet<>();
     if (object.getTags() != null) {
       for (String tag : object.getTags()) {
-        ArticleTagRelation relation = new ArticleTagRelation(object.getTenant(), tag,
-            object.getId());
+        ArticleTagRelation relation = new ArticleTagRelation(
+            object.getTenant(),
+            object.getStatus(),
+            tag,
+            object.getId()
+        );
         tagRelations.add(relation);
       }
     }
 
     return tagRelations;
+  }
+
+  public ArticleObject toArticle() {
+    ArticleObject object = new ArticleObject();
+    object.setTenant(tenant);
+    object.setStatus(status);
+    object.setId(id);
+    return object;
   }
 
   @Override

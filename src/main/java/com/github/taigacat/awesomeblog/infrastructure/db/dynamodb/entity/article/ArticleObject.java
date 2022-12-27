@@ -61,22 +61,4 @@ public class ArticleObject extends Article implements DynamoDbEntity {
   public void setRangeKey(String rangeKey) {
   }
 
-//  @Override
-//  public Status getStatus() {
-//    return super.getStatus();
-//  }
-//
-//  @Override
-//  public void setStatus(Status status) {
-//    super.setStatus(status);
-//  }
-
-//  public String getStatusString() {
-//    return this.getStatus().name().toLowerCase();
-//  }
-//
-//  public void setStatusString(String status) {
-//    this.setStatus(Article.Status.valueOf(status.toUpperCase()));
-//  }
-
 }

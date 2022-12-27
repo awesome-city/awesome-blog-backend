@@ -10,9 +10,11 @@ import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.article
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.article.ArticleObject;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.article.ArticleTagRelation;
 import com.github.taigacat.awesomeblog.util.CollectionUtils;
+import com.github.taigacat.awesomeblog.util.JsonMapper;
 import com.github.taigacat.awesomeblog.util.id.IdGenerator;
 import io.micronaut.core.annotation.NonNull;
 import jakarta.inject.Singleton;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -30,9 +32,10 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
   public DynamoDbArticleRepository(
       DynamoDbConfiguration dynamoConfiguration,
       DynamoDbClient dynamoDbClient,
+      JsonMapper jsonMapper,
       IdGenerator idGenerator
   ) {
-    super(dynamoConfiguration, dynamoDbClient);
+    super(dynamoConfiguration, dynamoDbClient, jsonMapper);
     this.idGenerator = idGenerator;
   }
 
@@ -88,16 +91,25 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
   }
 
   @Override
-  public PagingEntity<Article> findByTag(String tenant, Status status, String tagId, Integer limit,
-      String nextPageToken) {
+  public PagingEntity<Article> findByTag(
+      String tenant,
+      Status status,
+      String tagId,
+      Integer limit,
+      String nextPageToken
+  ) {
     LOGGER.debug("find articles by tag [tag = " + tagId + "]");
-    ArticleTagRelation articleTagRelation = new ArticleTagRelation(tenant, tagId);
-    PagingEntity<ArticleTagRelation> dynamoEntity = findAllItems(articleTagRelation, limit,
+    ArticleTagRelation articleTagRelation = new ArticleTagRelation(tenant, status, tagId);
+    PagingEntity<ArticleTagRelation> tagEntities = findAllItems(articleTagRelation, limit,
         nextPageToken);
 
-    // TODO BatchGetItem
+    List<ArticleObject> result = this.findManyItems(
+        tagEntities.getList().stream().map(ArticleTagRelation::toArticle).toList());
 
-    throw new RuntimeException();
+    return new PagingEntity<>(
+        result.stream().map(object -> (Article) object).toList(),
+        tagEntities.getNextPageToken()
+    );
   }
 
   @Override
@@ -133,12 +145,14 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
 
     // Relation - tag
     if (old != null) {
-      for (String oldTag : CollectionUtils.setDifference(old.getTags(), article.getTags())) {
-        deleteItem(new ArticleTagRelation(object.getTenant(), oldTag, object.getId()));
+      for (String oldTag : CollectionUtils.differenceSet(old.getTags(), article.getTags())) {
+        deleteItem(
+            new ArticleTagRelation(old.getTenant(), old.getStatus(), oldTag, old.getId()));
       }
 
-      for (String newTag : CollectionUtils.setDifference(article.getTags(), old.getTags())) {
-        putItem(new ArticleTagRelation(object.getTenant(), newTag, object.getId()));
+      for (String newTag : CollectionUtils.differenceSet(article.getTags(), old.getTags())) {
+        putItem(
+            new ArticleTagRelation(object.getTenant(), object.getStatus(), newTag, object.getId()));
       }
 
     } else {

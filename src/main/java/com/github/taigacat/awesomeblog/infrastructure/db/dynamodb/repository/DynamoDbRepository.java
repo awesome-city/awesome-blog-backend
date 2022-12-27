@@ -7,6 +7,7 @@ import com.github.taigacat.awesomeblog.domain.common.PagingEntity;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.DynamoDbConfiguration;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.common.DynamoDbTableType;
 import com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.entity.DynamoDbEntity;
+import com.github.taigacat.awesomeblog.util.JsonMapper;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.NonNull;
@@ -20,7 +21,9 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
@@ -45,7 +48,7 @@ import software.amazon.awssdk.services.dynamodb.model.KeyType;
 import software.amazon.awssdk.services.dynamodb.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.dynamodb.model.ScalarAttributeType;
 
-@Requires(beans = {DynamoDbConfiguration.class, DynamoDbClient.class})
+@Requires(beans = {DynamoDbConfiguration.class, DynamoDbClient.class, JsonMapper.class})
 @Singleton
 @Primary
 public class DynamoDbRepository {
@@ -56,13 +59,18 @@ public class DynamoDbRepository {
 
   protected final DynamoDbEnhancedClient enhancedClient;
   protected final DynamoDbConfiguration dynamoConfiguration;
-  private static final ObjectMapper mapper = new ObjectMapper();
 
-  public DynamoDbRepository(DynamoDbConfiguration dynamoConfiguration,
-      DynamoDbClient dynamoDbClient) {
+  protected final ObjectMapper mapper;
+
+  public DynamoDbRepository(
+      DynamoDbConfiguration dynamoConfiguration,
+      DynamoDbClient dynamoDbClient,
+      JsonMapper jsonMapper
+  ) {
     this.dynamoDbClient = dynamoDbClient;
     this.dynamoConfiguration = dynamoConfiguration;
     this.enhancedClient = DynamoDbEnhancedClient.builder().dynamoDbClient(dynamoDbClient).build();
+    this.mapper = jsonMapper.getMapper();
   }
 
   public void createTable(DynamoDbTableType tableType) {
@@ -93,6 +101,13 @@ public class DynamoDbRepository {
   public <T extends DynamoDbEntity> PagingEntity<T> findAllItems(T tableSchema,
       @Nullable Integer limit,
       @Nullable String nextPageToken) {
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug(
+          "findAll request [condition = " + tableSchema + ", limit = " + limit
+              + ", nextPageToken = "
+              + nextPageToken + "]");
+    }
+
     DynamoDbTable<T> table = this.getTable(tableSchema, enhancedClient, dynamoConfiguration);
 
     QueryEnhancedRequest.Builder builder = QueryEnhancedRequest.builder().queryConditional(
@@ -103,7 +118,7 @@ public class DynamoDbRepository {
     }
 
     if (nextPageToken != null) {
-      Map<String, AttributeValue> exclusiveStartKey = parseNextPageToken(nextPageToken);
+      Map<String, AttributeValue> exclusiveStartKey = deserializeNextPageToken(nextPageToken);
       if (exclusiveStartKey != null) {
         builder.exclusiveStartKey(exclusiveStartKey);
       }
@@ -114,18 +129,20 @@ public class DynamoDbRepository {
     List<T> items = new ArrayList<>();
     Iterator<Page<T>> iterator = table.query(enhancedRequest).iterator();
     Map<String, AttributeValue> lastEvaluatedKey = null;
-    while (iterator.hasNext()) {
+
+    // NOTE: while (iterator.hasNext()) で取り出そうとすると、limitに従わずに全件取得してしまう
+    if (iterator.hasNext()) {
       Page<T> page = iterator.next();
       lastEvaluatedKey = page.lastEvaluatedKey();
-      items.addAll(page.items());
+      items = page.items();
     }
 
-    String newNextPageToken = nextPageToken(lastEvaluatedKey).orElse(null);
+    String newNextPageToken = serializeLastEvaluatedKey(lastEvaluatedKey).orElse(null);
 
     PagingEntity<T> result = new PagingEntity<>(items, newNextPageToken);
 
     if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("findAll " + result);
+      LOGGER.debug("findAll result = " + result);
     }
 
     return result;
@@ -133,23 +150,44 @@ public class DynamoDbRepository {
 
   public <T extends DynamoDbEntity> List<T> findManyItems(Collection<T> items) {
     List<T> itemList = new ArrayList<>(items);
-    DynamoDbTable<T> table = this.getTable(itemList.get(0), enhancedClient, dynamoConfiguration);
+    T bean = itemList.get(0);
+    List<Key> keys = items.stream()
+        .map(
+            item -> Key.builder()
+                .partitionValue(item.getHashKey())
+                .sortValue(item.getRangeKey())
+                .build()
+        ).toList();
 
-    BatchGetItemEnhancedRequest.Builder builder = BatchGetItemEnhancedRequest.builder();
+    return findManyItems(keys, bean);
+  }
 
-    for (T item : items) {
-      Class<T> clazz = (Class<T>) item.getClass();
-      builder.addReadBatch(ReadBatch.builder(clazz).addGetItem(item).build());
-    }
+  public <T extends DynamoDbEntity> List<T> findManyItems(List<Key> keys, T schemaBean) {
+    @SuppressWarnings("unchecked")
+    Class<T> clazz = (Class<T>) schemaBean.getClass();
 
-    Iterator<BatchGetResultPage> iterator = enhancedClient.batchGetItem(builder.build()).iterator();
-//    while(iterator.hasNext()) {
-//      iterator.next().
-//    }
+    DynamoDbTable<T> table = this.getTable(schemaBean, enhancedClient, dynamoConfiguration);
+    List<T> result = new ArrayList<>();
+    List<Key> unProcessedKey = keys;
 
-    return null;
+    do {
+      BatchGetItemEnhancedRequest.Builder builder = BatchGetItemEnhancedRequest.builder();
 
+      for (Key key : unProcessedKey) {
+        builder.addReadBatch(
+            ReadBatch.builder(clazz)
+                .mappedTableResource(table)
+                .addGetItem(key).build());
+      }
 
+      for (BatchGetResultPage page : enhancedClient.batchGetItem(builder.build())) {
+        result.addAll(page.resultsForTable(table));
+        unProcessedKey = page.unprocessedKeysForTable(table);
+      }
+
+    } while (!unProcessedKey.isEmpty());
+
+    return result;
   }
 
 
@@ -218,11 +256,16 @@ public class DynamoDbRepository {
   }
 
   @NonNull
-  private static Optional<String> nextPageToken(
+  private Optional<String> serializeLastEvaluatedKey(
       @Nullable Map<String, AttributeValue> lastEvaluatedKey) {
     if (lastEvaluatedKey != null) {
       try {
-        String str = mapper.writeValueAsString(lastEvaluatedKey);
+        String str = mapper.writeValueAsString(
+            lastEvaluatedKey.entrySet().stream()
+                .collect(
+                    Collectors.toMap(Entry::getKey, entry -> entry.getValue().s())
+                )
+        );
         if (LOGGER.isDebugEnabled()) {
           LOGGER.debug("lastEvaluatedKey = " + str);
         }
@@ -235,15 +278,18 @@ public class DynamoDbRepository {
   }
 
   @Nullable
-  private static Map<String, AttributeValue> parseNextPageToken(@Nullable String nextPageToken) {
+  private Map<String, AttributeValue> deserializeNextPageToken(
+      @Nullable String nextPageToken) {
     if (nextPageToken != null && !nextPageToken.isEmpty()) {
       try {
         if (LOGGER.isDebugEnabled()) {
           LOGGER.debug("nextPageToken = " + nextPageToken);
         }
-        return mapper.readValue(nextPageToken,
-            new TypeReference<LinkedHashMap<String, AttributeValue>>() {
+        Map<String, String> m = mapper.readValue(nextPageToken,
+            new TypeReference<LinkedHashMap<String, String>>() {
             });
+        return m.entrySet().stream().collect(Collectors.toMap(Entry::getKey,
+            entry -> AttributeValue.builder().s(entry.getValue()).build()));
       } catch (JsonProcessingException e) {
         LOGGER.error("failed to deserialize nextPageToken.", e);
       }
