@@ -1,4 +1,4 @@
-package com.github.taigacat.awesomeblog.util.uuid;
+package com.github.taigacat.awesomeblog.util.id;
 
 import com.github.ksuid.Ksuid;
 import io.micronaut.context.annotation.Requires;

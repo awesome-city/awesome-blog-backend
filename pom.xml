@@ -50,6 +50,11 @@
         </dependency>
         <dependency>
             <groupId>io.micronaut</groupId>
+            <artifactId>micronaut-inject-java</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut</groupId>
             <artifactId>micronaut-validation</artifactId>
             <scope>compile</scope>
         </dependency>
@@ -177,6 +182,7 @@
                     </compilerArgs>
                 </configuration>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -196,6 +202,14 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <trimStackTrace>false</trimStackTrace>
+                </configuration>
             </plugin>
 
             <plugin>
