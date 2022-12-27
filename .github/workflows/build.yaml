@@ -27,7 +27,7 @@ jobs:
     strategy:
       matrix:
         packaging: [ native-image, jar ]
-        java-version: [ 11, 17 ]
+        java-version: [ 17 ]
         graalvm-version: [ 22.3.0 ]
     uses: ./.github/workflows/_build.yaml
     with:
