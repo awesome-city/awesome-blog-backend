@@ -1,5 +1,6 @@
 package com.github.taigacat.awesomeblog.presentation.controller;
 
+import com.github.taigacat.awesomeblog.constant.error.BadRequestException;
 import com.github.taigacat.awesomeblog.constant.error.ResourceNotFoundException;
 import com.github.taigacat.awesomeblog.domain.common.PagingEntity;
 import com.github.taigacat.awesomeblog.domain.entity.Article;
@@ -7,15 +8,21 @@ import com.github.taigacat.awesomeblog.domain.repository.ArticleRepository;
 import com.github.taigacat.awesomeblog.util.aspect.Log;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Delete;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Header;
 import io.micronaut.http.annotation.PathVariable;
+import io.micronaut.http.annotation.Post;
+import io.micronaut.http.annotation.Put;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.annotation.Status;
+import io.micronaut.validation.validator.Validator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import javax.validation.ConstraintViolation;
 import javax.validation.constraints.NotBlank;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,9 +32,14 @@ public class ArticleController {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ArticleController.class);
   private final ArticleRepository repository;
+  private final Validator validator;
 
-  public ArticleController(ArticleRepository articleRepository) {
+  public ArticleController(
+      ArticleRepository articleRepository,
+      Validator validator
+  ) {
     this.repository = articleRepository;
+    this.validator = validator;
   }
 
   /**
@@ -87,6 +99,27 @@ public class ArticleController {
     return result;
   }
 
+  @Post
+  @Log
+  public Article createArticle(
+      @Header("X-TENANT-ID") String tenant,
+      @Body Article article
+  ) {
+    article.setTenant(tenant);
+
+    var violations = validator.validate(article);
+    if (violations.size() != 0) {
+      throw new BadRequestException(
+          "article has some violations. [violations = "
+              + violations.stream()
+              .map(ConstraintViolation::getMessage)
+              .collect(Collectors.joining(","))
+              + "]"
+      );
+    }
+    return repository.create(article);
+  }
+
   @Get("/{id}")
   @Log
   public Article getArticleById(
@@ -97,6 +130,30 @@ public class ArticleController {
 
     return optional.orElseThrow(
         () -> new ResourceNotFoundException("article not found"));
+  }
+
+  @Put("/{id}")
+  @Log
+  public Article updateArticle(
+      @Header("X-TENANT-ID") String tenant,
+      @PathVariable @NonNull @NotBlank String id,
+      @Body Article article
+  ) {
+    article.setTenant(tenant);
+    article.setId(id);
+
+    var violations = validator.validate(article);
+    if (violations.size() != 0) {
+      throw new BadRequestException(
+          "article has some violations. [violations = "
+              + violations.stream()
+              .map(ConstraintViolation::getMessage)
+              .collect(Collectors.joining(","))
+              + "]"
+      );
+    }
+
+    return repository.update(article);
   }
 
   @Delete("/{id}")

@@ -40,7 +40,9 @@ public interface ArticleRepository {
       String nextPageToken
   );
 
-  Article save(@NonNull Article article);
+  Article create(@NonNull Article article);
+
+  Article update(@NonNull Article article);
 
   void delete(
       @NonNull String tenant,

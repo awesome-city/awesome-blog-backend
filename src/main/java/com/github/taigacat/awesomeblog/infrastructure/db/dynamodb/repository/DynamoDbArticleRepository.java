@@ -1,5 +1,7 @@
 package com.github.taigacat.awesomeblog.infrastructure.db.dynamodb.repository;
 
+import com.github.taigacat.awesomeblog.constant.error.ResourceConflictException;
+import com.github.taigacat.awesomeblog.constant.error.ResourceNotFoundException;
 import com.github.taigacat.awesomeblog.domain.common.PagingEntity;
 import com.github.taigacat.awesomeblog.domain.entity.Article;
 import com.github.taigacat.awesomeblog.domain.entity.Article.Status;
@@ -158,55 +160,83 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
   }
 
   @Override
-  @Log
-  public Article save(Article article) {
-    Article old = null;
-    if (article.getId() != null && !article.getId().isEmpty()) {
-      var saved = findById(article.getTenant(), article.getId());
-      if (saved.isPresent()) {
-        old = saved.get();
-      }
+  public Article create(Article article) {
+    // 同じnameで他の記事が存在している場合はエラー
+    if (!this.isUniqueName(article)) {
+      throw new ResourceConflictException("article name is already used by another article.");
     }
 
     // Object
     ArticleObject object = ArticleObject.of(article);
     object.setId(idGenerator.generate());
-    LOGGER.info("put article entity [ id = " + object.getId() + "]");
+    LOGGER.info("create article entity [ id = " + object.getId() + "]");
     putItem(object);
 
     // Relation - id
     putItem(new ArticleIdRelation(object));
 
     // Relation - name
-    if (old != null && !article.getName().equals(old.getName())) {
-      deleteItem(new ArticleNameRelation(old));
-    }
     putItem(new ArticleNameRelation(object));
 
     // Relation - tag
-    if (old != null) {
-      for (String oldTag : CollectionUtils.differenceSet(old.getTags(), article.getTags())) {
-        deleteItem(
-            new ArticleTagRelation(old.getTenant(), old.getStatus(), oldTag, old.getId()));
-      }
-
-      for (String newTag : CollectionUtils.differenceSet(article.getTags(), old.getTags())) {
-        putItem(
-            new ArticleTagRelation(object.getTenant(), object.getStatus(), newTag, object.getId()));
-      }
-
-    } else {
-      for (ArticleTagRelation tagRelation : ArticleTagRelation.of(object)) {
-        putItem(tagRelation);
-      }
+    for (ArticleTagRelation tagRelation : ArticleTagRelation.of(object)) {
+      putItem(tagRelation);
     }
 
     // Relation - author
-    if (old != null && old.getAuthorId() != null && !old.getAuthorId()
-        .equals(object.getAuthorId())) {
-      deleteItem(new ArticleAuthorRelation(old));
-    }
     putItem(new ArticleAuthorRelation(object));
+
+    return object;
+  }
+
+  @Override
+  @Log
+  public Article update(Article article) {
+    if (article.getId() == null) {
+      throw new IllegalArgumentException();
+    }
+
+    // 保存済の記事が無い場合はエラー
+    Article old = findById(article.getTenant(), article.getId())
+        .orElseThrow(
+            () -> new ResourceNotFoundException("article not found")
+        );
+    assert old != null;
+
+    // 同じnameで他の記事が存在している場合はエラー
+    if (!this.isUniqueName(article)) {
+      throw new ResourceConflictException("article name is already used by another article.");
+    }
+
+    // Object
+    ArticleObject object = ArticleObject.of(article);
+    LOGGER.info("update article entity [ id = " + object.getId() + "]");
+    updateItem(object);
+
+    // Relation - name
+    // 名前が変わっていたら削除＆作成
+    if (!article.getName().equals(old.getName())) {
+      deleteItem(new ArticleNameRelation(old));
+      putItem(new ArticleNameRelation(object));
+    }
+
+    // Relation - tag
+    for (String oldTag : CollectionUtils.differenceSet(old.getTags(), article.getTags())) {
+      deleteItem(
+          new ArticleTagRelation(old.getTenant(), old.getStatus(), oldTag, old.getId()));
+    }
+
+    for (String newTag : CollectionUtils.differenceSet(article.getTags(), old.getTags())) {
+      putItem(
+          new ArticleTagRelation(object.getTenant(), object.getStatus(), newTag, object.getId()));
+    }
+
+    // Relation - author
+    // Authorが変わっていたら削除＆作成
+    if (old.getAuthorId() != null && !old.getAuthorId().equals(object.getAuthorId())) {
+      deleteItem(new ArticleAuthorRelation(old));
+      putItem(new ArticleAuthorRelation(object));
+    }
 
     return object;
   }
@@ -235,5 +265,11 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
                 new Article.Builder().tenant(tenant).status(Status.PUBLISHED).id(id).build()
             ))
         );
+  }
+
+  private boolean isUniqueName(Article article) {
+    return findItem(new ArticleNameRelation(article.getTenant(), article.getName()))
+        .map(r -> !r.getId().equals(article.getId()))
+        .orElse(true);
   }
 }
