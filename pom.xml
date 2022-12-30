@@ -20,7 +20,7 @@
         <micronaut.version>3.7.4</micronaut.version>
         <lombok.version>1.18.24</lombok.version>
         <dynamodb.local.version>1.20.0</dynamodb.local.version>
-        <equalsverifier.version>3.12.2</equalsverifier.version>
+        <equalsverifier.version>3.12.3</equalsverifier.version>
         <exec.mainClass>io.micronaut.function.aws.runtime.MicronautLambdaRuntime</exec.mainClass>
         <micronaut.runtime>lambda</micronaut.runtime>
     </properties>
