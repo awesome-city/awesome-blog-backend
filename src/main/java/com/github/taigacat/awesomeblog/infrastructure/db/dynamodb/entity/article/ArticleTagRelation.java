@@ -23,21 +23,21 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortK
 @NoArgsConstructor
 public class ArticleTagRelation implements DynamoDbEntity {
 
-  private String tenant;
+  private String site;
   private String id;
 
   private Status status;
 
   private String tagId;
 
-  public ArticleTagRelation(String tenant, Status status, String tagId) {
-    this.tenant = tenant;
+  public ArticleTagRelation(String site, Status status, String tagId) {
+    this.site = site;
     this.status = status;
     this.tagId = tagId;
   }
 
-  public ArticleTagRelation(String tenant, Status status, String tagId, String id) {
-    this.tenant = tenant;
+  public ArticleTagRelation(String site, Status status, String tagId, String id) {
+    this.site = site;
     this.status = status;
     this.tagId = tagId;
     this.id = id;
@@ -49,7 +49,7 @@ public class ArticleTagRelation implements DynamoDbEntity {
     if (object.getTags() != null) {
       for (String tag : object.getTags()) {
         ArticleTagRelation relation = new ArticleTagRelation(
-            object.getTenant(),
+            object.getSite(),
             object.getStatus(),
             tag,
             object.getId()
@@ -63,7 +63,7 @@ public class ArticleTagRelation implements DynamoDbEntity {
 
   public ArticleObject toArticle() {
     ArticleObject object = new ArticleObject();
-    object.setTenant(tenant);
+    object.setSite(site);
     object.setStatus(status);
     object.setId(id);
     return object;
@@ -79,7 +79,7 @@ public class ArticleTagRelation implements DynamoDbEntity {
   public String getHashKey() {
     return DynamoDbSupport.createHashKeyValue(
         "Article-tag",
-        "tenant", this.getTenant(),
+        "site", this.getSite(),
         "tagId", this.getTagId()
     );
   }

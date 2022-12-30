@@ -55,7 +55,7 @@ public class ArticleController {
   @Get
   @Log
   public PagingEntity<Article> getArticles(
-      @Header("X-TENANT-ID") String tenant,
+      @Header("X-SITE-ID") String site,
       @QueryValue String status,
       @QueryValue Optional<String> name,
       @QueryValue Optional<String> tag,
@@ -67,13 +67,13 @@ public class ArticleController {
 
     PagingEntity<Article> result;
     if (name.isPresent()) {
-      Optional<Article> findByNameResult = repository.findByName(tenant, name.get());
+      Optional<Article> findByNameResult = repository.findByName(site, name.get());
       result = findByNameResult
           .map(article -> new PagingEntity<>(List.of(article), null))
           .orElse(null);
     } else if (tag.isPresent()) {
       result = repository.findByTag(
-          tenant,
+          site,
           statusEnum,
           tag.get(),
           limit.orElse(100),
@@ -81,7 +81,7 @@ public class ArticleController {
       );
     } else if (author.isPresent()) {
       result = repository.findByAuthor(
-          tenant,
+          site,
           statusEnum,
           author.get(),
           limit.orElse(100),
@@ -89,7 +89,7 @@ public class ArticleController {
       );
     } else {
       result = repository.findAll(
-          tenant,
+          site,
           statusEnum,
           limit.orElse(100),
           nextPageToken.orElse(null)
@@ -102,10 +102,10 @@ public class ArticleController {
   @Post
   @Log
   public Article createArticle(
-      @Header("X-TENANT-ID") String tenant,
+      @Header("X-SITE-ID") String site,
       @Body Article article
   ) {
-    article.setTenant(tenant);
+    article.setSite(site);
 
     var violations = validator.validate(article);
     if (violations.size() != 0) {
@@ -123,10 +123,10 @@ public class ArticleController {
   @Get("/{id}")
   @Log
   public Article getArticleById(
-      @Header("X-TENANT-ID") String tenant,
+      @Header("X-SITE-ID") String site,
       @PathVariable @NonNull @NotBlank String id
   ) {
-    Optional<Article> optional = repository.findById(tenant, id);
+    Optional<Article> optional = repository.findById(site, id);
 
     return optional.orElseThrow(
         () -> new ResourceNotFoundException("article not found"));
@@ -135,11 +135,11 @@ public class ArticleController {
   @Put("/{id}")
   @Log
   public Article updateArticle(
-      @Header("X-TENANT-ID") String tenant,
+      @Header("X-SITE-ID") String site,
       @PathVariable @NonNull @NotBlank String id,
       @Body Article article
   ) {
-    article.setTenant(tenant);
+    article.setSite(site);
     article.setId(id);
 
     var violations = validator.validate(article);
@@ -160,9 +160,9 @@ public class ArticleController {
   @Log
   @Status(HttpStatus.NO_CONTENT)
   public void delete(
-      @Header("X-TENANT-ID") String tenant,
+      @Header("X-SITE-ID") String site,
       @PathVariable @NonNull @NotBlank String id
   ) {
-    repository.delete(tenant, id);
+    repository.delete(site, id);
   }
 }

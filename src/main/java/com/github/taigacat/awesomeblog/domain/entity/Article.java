@@ -19,7 +19,7 @@ public class Article implements Identified {
 
   @NonNull
   @NotBlank
-  private String tenant;
+  private String site;
 
   /**
    * 記事ID
@@ -117,12 +117,12 @@ public class Article implements Identified {
   }
 
   @NonNull
-  public String getTenant() {
-    return tenant;
+  public String getSite() {
+    return site;
   }
 
-  public void setTenant(@NonNull String tenant) {
-    this.tenant = tenant;
+  public void setSite(@NonNull String site) {
+    this.site = site;
   }
 
   @Override
@@ -233,7 +233,7 @@ public class Article implements Identified {
 
   public static class Builder {
 
-    private String tenant;
+    private String site;
     private Status status;
     private String id;
     private String name;
@@ -242,7 +242,7 @@ public class Article implements Identified {
 
     public Article build() {
       Article article = new Article();
-      article.tenant = tenant;
+      article.site = site;
       article.status = status;
       article.id = id;
       article.name = name;
@@ -251,8 +251,8 @@ public class Article implements Identified {
       return article;
     }
 
-    public Builder tenant(String tenant) {
-      this.tenant = tenant;
+    public Builder site(String site) {
+      this.site = site;
       return this;
     }
 

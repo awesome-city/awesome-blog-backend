@@ -19,20 +19,20 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortK
 @NoArgsConstructor
 public class ArticleNameRelation implements DynamoDbEntity {
 
-  private String tenant;
+  private String site;
   private String id;
 
   private String name;
 
   private Article.Status status;
 
-  public ArticleNameRelation(String tenant, String name) {
-    this.tenant = tenant;
+  public ArticleNameRelation(String site, String name) {
+    this.site = site;
     this.name = name;
   }
 
   public ArticleNameRelation(Article object) {
-    this.tenant = object.getTenant();
+    this.site = object.getSite();
     this.id = object.getId();
     this.name = object.getName();
     this.status = object.getStatus();
@@ -48,7 +48,7 @@ public class ArticleNameRelation implements DynamoDbEntity {
   public String getHashKey() {
     return DynamoDbSupport.createHashKeyValue(
         "Article-name",
-        "tenant", this.getTenant()
+        "site", this.getSite()
     );
   }
 

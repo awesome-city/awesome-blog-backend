@@ -47,7 +47,7 @@ class ArticleControllerTest {
     AwsProxyRequest request = new AwsProxyRequestBuilder()
         .method("GET")
         .path("/articles")
-        .header("X-TENANT-ID", "tenant1")
+        .header("X-SITE-ID", "site1")
         .queryString("status", "published")
         .build();
     AwsProxyResponse response = handler.handleRequest(request, lambdaContext);
@@ -59,7 +59,7 @@ class ArticleControllerTest {
     AwsProxyRequest request = new AwsProxyRequestBuilder()
         .method("GET")
         .path("/articles")
-        .header("X-TENANT-ID", "tenant1")
+        .header("X-SITE-ID", "site1")
         .queryString("status", "published")
         .queryString("name", "name1")
         .build();
@@ -72,7 +72,7 @@ class ArticleControllerTest {
     AwsProxyRequest request = new AwsProxyRequestBuilder()
         .method("GET")
         .path("/articles")
-        .header("X-TENANT-ID", "tenant1")
+        .header("X-SITE-ID", "site1")
         .queryString("status", "published")
         .queryString("tag", "tagA")
         .build();
@@ -85,7 +85,7 @@ class ArticleControllerTest {
     AwsProxyRequest request = new AwsProxyRequestBuilder()
         .method("GET")
         .path("/articles")
-        .header("X-TENANT-ID", "tenant1")
+        .header("X-SITE-ID", "site1")
         .queryString("status", "published")
         .queryString("author", "taigacat")
         .build();
@@ -98,7 +98,7 @@ class ArticleControllerTest {
     AwsProxyRequest request = new AwsProxyRequestBuilder()
         .method("GET")
         .path("/articles/id1")
-        .header("X-TENANT-ID", "tenant1")
+        .header("X-SITE-ID", "site1")
         .build();
     AwsProxyResponse response = handler.handleRequest(request, lambdaContext);
     assertEquals(200, response.getStatusCode());
@@ -109,7 +109,7 @@ class ArticleControllerTest {
     AwsProxyRequest request = new AwsProxyRequestBuilder()
         .method("DELETE")
         .path("/articles/id1")
-        .header("X-TENANT-ID", "tenant1")
+        .header("X-SITE-ID", "site1")
         .build();
     AwsProxyResponse response = handler.handleRequest(request, lambdaContext);
     assertEquals(204, response.getStatusCode());
@@ -120,7 +120,7 @@ class ArticleControllerTest {
   public static class ArticleRepositoryStub implements ArticleRepository {
 
     @Override
-    public PagingEntity<Article> findAll(String tenant, Status status, Integer limit,
+    public PagingEntity<Article> findAll(String site, Status status, Integer limit,
         String nextPageToken) {
       return new PagingEntity<>(List.of(
           new Article.Builder().id("id1").name("name1").status(Status.PUBLISHED).build(),
@@ -130,21 +130,21 @@ class ArticleControllerTest {
     }
 
     @Override
-    public Optional<Article> findById(String tenant, String id) {
+    public Optional<Article> findById(String site, String id) {
       return Optional.of(
           new Article.Builder().id("id1").name("name1").status(Status.PUBLISHED).build()
       );
     }
 
     @Override
-    public Optional<Article> findByName(String tenant, String name) {
+    public Optional<Article> findByName(String site, String name) {
       return Optional.of(
           new Article.Builder().id("id1").name("name1").status(Status.PUBLISHED).build()
       );
     }
 
     @Override
-    public PagingEntity<Article> findByTag(String tenant, Status status, String tagId,
+    public PagingEntity<Article> findByTag(String site, Status status, String tagId,
         Integer limit, String nextPageToken) {
       return new PagingEntity<>(List.of(
           new Article.Builder().id("id1").name("name1").status(Status.PUBLISHED).build(),
@@ -154,7 +154,7 @@ class ArticleControllerTest {
     }
 
     @Override
-    public PagingEntity<Article> findByAuthor(String tenant, Status status, String authorId,
+    public PagingEntity<Article> findByAuthor(String site, Status status, String authorId,
         Integer limit, String nextPageToken) {
       return new PagingEntity<>(List.of(
           new Article.Builder().id("id1").name("name1").status(Status.PUBLISHED).build(),
@@ -174,7 +174,7 @@ class ArticleControllerTest {
     }
 
     @Override
-    public void delete(String tenant, String id) {
+    public void delete(String site, String id) {
     }
   }
 }

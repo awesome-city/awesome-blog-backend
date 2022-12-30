@@ -45,10 +45,10 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
 
   @Override
   @Log
-  public PagingEntity<Article> findAll(String tenant, Article.Status status, Integer limit,
+  public PagingEntity<Article> findAll(String site, Article.Status status, Integer limit,
       String nextPageToken) {
     PagingEntity<ArticleObject> dynamoEntity = findAllItems(
-        ArticleObject.of(new Article.Builder().tenant(tenant).status(status).build()),
+        ArticleObject.of(new Article.Builder().site(site).status(status).build()),
         limit,
         nextPageToken
     );
@@ -64,16 +64,16 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
   @Override
   @Log
   public Optional<Article> findById(
-      @NonNull String tenant,
+      @NonNull String site,
       @NonNull String id
   ) {
     LOGGER.debug("find article by id [id = " + id + "]");
-    Optional<ArticleIdRelation> idRelation = findItem(new ArticleIdRelation(tenant, id));
+    Optional<ArticleIdRelation> idRelation = findItem(new ArticleIdRelation(site, id));
 
     Optional<ArticleObject> object = idRelation
         .flatMap(r -> findItem(ArticleObject.of(
             new Article.Builder()
-                .tenant(r.getTenant())
+                .site(r.getSite())
                 .status(r.getStatus())
                 .id(r.getId())
                 .build()
@@ -89,14 +89,14 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
 
   @Override
   @Log
-  public Optional<Article> findByName(String tenant, String name) {
+  public Optional<Article> findByName(String site, String name) {
     LOGGER.debug("find article by name [name = " + name + "]");
-    ArticleNameRelation articleNameRelation = new ArticleNameRelation(tenant, name);
+    ArticleNameRelation articleNameRelation = new ArticleNameRelation(site, name);
     Optional<ArticleNameRelation> relation = findItem(articleNameRelation);
     if (relation.isPresent()) {
       ArticleNameRelation r = relation.get();
       LOGGER.info("relation found [id = " + r.getId() + "]");
-      return this.findById(tenant, r.getId());
+      return this.findById(site, r.getId());
     } else {
       LOGGER.info("relation not found");
       return Optional.empty();
@@ -106,14 +106,14 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
   @Override
   @Log
   public PagingEntity<Article> findByTag(
-      String tenant,
+      String site,
       Status status,
       String tagId,
       Integer limit,
       String nextPageToken
   ) {
     LOGGER.debug("find articles by tag [tag = " + tagId + "]");
-    ArticleTagRelation articleTagRelation = new ArticleTagRelation(tenant, status, tagId);
+    ArticleTagRelation articleTagRelation = new ArticleTagRelation(site, status, tagId);
     PagingEntity<ArticleTagRelation> tagEntities = findAllItems(articleTagRelation, limit,
         nextPageToken);
 
@@ -129,7 +129,7 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
   @Override
   @Log
   public PagingEntity<Article> findByAuthor(
-      String tenant,
+      String site,
       Status status,
       String authorId,
       Integer limit,
@@ -137,7 +137,7 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
   ) {
     LOGGER.debug("find articles by author [author = " + authorId + "]");
     ArticleAuthorRelation articleAuthorRelation = new ArticleAuthorRelation(
-        tenant,
+        site,
         status,
         authorId
     );
@@ -197,7 +197,7 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
     }
 
     // 保存済の記事が無い場合はエラー
-    Article old = findById(article.getTenant(), article.getId())
+    Article old = findById(article.getSite(), article.getId())
         .orElseThrow(
             () -> new ResourceNotFoundException("article not found")
         );
@@ -223,12 +223,12 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
     // Relation - tag
     for (String oldTag : CollectionUtils.differenceSet(old.getTags(), article.getTags())) {
       deleteItem(
-          new ArticleTagRelation(old.getTenant(), old.getStatus(), oldTag, old.getId()));
+          new ArticleTagRelation(old.getSite(), old.getStatus(), oldTag, old.getId()));
     }
 
     for (String newTag : CollectionUtils.differenceSet(article.getTags(), old.getTags())) {
       putItem(
-          new ArticleTagRelation(object.getTenant(), object.getStatus(), newTag, object.getId()));
+          new ArticleTagRelation(object.getSite(), object.getStatus(), newTag, object.getId()));
     }
 
     // Relation - author
@@ -242,7 +242,7 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
   }
 
   @Override
-  public void delete(String tenant, String id) {
+  public void delete(String site, String id) {
     Consumer<ArticleObject> deleteRelations = (article) -> {
       // ArticleId
       deleteItem(new ArticleIdRelation(article));
@@ -259,16 +259,16 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
       deleteItem(new ArticleAuthorRelation(article));
     };
 
-    this.findById(tenant, id)
+    this.findById(site, id)
         .ifPresent(
             article -> deleteItem(ArticleObject.of(
-                new Article.Builder().tenant(tenant).status(Status.PUBLISHED).id(id).build()
+                new Article.Builder().site(site).status(Status.PUBLISHED).id(id).build()
             ))
         );
   }
 
   private boolean isUniqueName(Article article) {
-    return findItem(new ArticleNameRelation(article.getTenant(), article.getName()))
+    return findItem(new ArticleNameRelation(article.getSite(), article.getName()))
         .map(r -> !r.getId().equals(article.getId()))
         .orElse(true);
   }

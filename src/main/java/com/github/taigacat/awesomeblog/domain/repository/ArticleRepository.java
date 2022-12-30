@@ -8,24 +8,24 @@ import java.util.Optional;
 public interface ArticleRepository {
 
   PagingEntity<Article> findAll(
-      @NonNull String tenant,
+      @NonNull String site,
       @NonNull Article.Status status,
       Integer limit,
       String nextPageToken
   );
 
   Optional<Article> findById(
-      @NonNull String tenant,
+      @NonNull String site,
       @NonNull String id
   );
 
   Optional<Article> findByName(
-      @NonNull String tenant,
+      @NonNull String site,
       @NonNull String name
   );
 
   PagingEntity<Article> findByTag(
-      @NonNull String tenant,
+      @NonNull String site,
       @NonNull Article.Status status,
       @NonNull String tagId,
       Integer limit,
@@ -33,7 +33,7 @@ public interface ArticleRepository {
   );
 
   PagingEntity<Article> findByAuthor(
-      @NonNull String tenant,
+      @NonNull String site,
       @NonNull Article.Status status,
       @NonNull String authorId,
       Integer limit,
@@ -45,7 +45,7 @@ public interface ArticleRepository {
   Article update(@NonNull Article article);
 
   void delete(
-      @NonNull String tenant,
+      @NonNull String site,
       @NonNull String id
   );
 }

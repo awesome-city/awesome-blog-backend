@@ -40,7 +40,7 @@ public class ArticleObject extends Article implements DynamoDbEntity {
   public String getHashKey() {
     return DynamoDbSupport.createHashKeyValue(
         "Article",
-        "tenant", this.getTenant(),
+        "site", this.getSite(),
         "status", this.getStatus().name().toLowerCase()
     );
   }
