@@ -69,6 +69,7 @@ jobs:
 
       - name: Add coverage to PR
         id: jacoco
+        if: ${{ github.head_ref != '' }}
         uses: madrapps/jacoco-report@v1.3
         with:
           paths: ${{ github.workspace }}/target/site/jacoco/jacoco.xml

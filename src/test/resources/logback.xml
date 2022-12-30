@@ -12,7 +12,7 @@
         <appender-ref ref="STDOUT"/>
     </root>
 
-    <logger name="com.github.taigacat.awesomeblog" level="DEBUG" additivity="false">
+    <logger name="com.github.awesome_city.blog.api" level="DEBUG" additivity="false">
         <appender-ref ref="STDOUT"/>
     </logger>
 </configuration>

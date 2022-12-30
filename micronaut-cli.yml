@@ -1,5 +1,5 @@
 applicationType: default
-defaultPackage: com.github.taigacat.awesomeblog
+defaultPackage: com.github.awesome_city.blog.api
 testFramework: junit
 sourceLanguage: java
 buildTool: maven
