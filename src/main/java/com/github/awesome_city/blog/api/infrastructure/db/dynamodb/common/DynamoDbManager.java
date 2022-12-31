@@ -50,7 +50,7 @@ import software.amazon.awssdk.services.dynamodb.model.ScalarAttributeType;
 @Requires(beans = {DynamoDbConfiguration.class, DynamoDbClient.class, JsonMapper.class})
 @Singleton
 @Primary
-public final class DynamoDbManager {
+public class DynamoDbManager {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamoDbManager.class);
 

@@ -267,7 +267,7 @@ public class DynamoDbArticleRepository implements ArticleRepository {
 
   private boolean existName(Article article) {
     return manager.findItem(new ArticleNameRelation(article.getSite(), article.getName()))
-        .map(r -> !r.getId().equals(article.getId()))
-        .orElse(true);
+        .map(r -> !(r.getSite().equals(article.getSite()) && r.getId().equals(article.getId())))
+        .orElse(false);
   }
 }
