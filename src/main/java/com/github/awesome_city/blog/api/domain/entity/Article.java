@@ -231,6 +231,10 @@ public class Article implements Identified {
     this.modifyAt = modifyAt;
   }
 
+  public static Builder builder() {
+    return new Article.Builder();
+  }
+
   public static class Builder {
 
     private String site;

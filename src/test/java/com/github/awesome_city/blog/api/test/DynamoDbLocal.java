@@ -2,8 +2,8 @@ package com.github.awesome_city.blog.api.test;
 
 import com.amazonaws.services.dynamodbv2.local.main.ServerRunner;
 import com.amazonaws.services.dynamodbv2.local.server.DynamoDBProxyServer;
+import com.github.awesome_city.blog.api.infrastructure.db.dynamodb.common.DynamoDbManager;
 import com.github.awesome_city.blog.api.infrastructure.db.dynamodb.common.DynamoDbTableType;
-import com.github.awesome_city.blog.api.infrastructure.db.dynamodb.repository.DynamoDbRepository;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.env.Environment;
@@ -19,13 +19,13 @@ public class DynamoDbLocal {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamoDbLocal.class);
 
   private DynamoDBProxyServer server;
-  private final DynamoDbRepository dynamoRepository;
+  private final DynamoDbManager dynamoRepository;
 
   private final String dynamoDbLocalPort;
 
   public DynamoDbLocal(
       @Value("${dynamodb.local.port}") String port,
-      DynamoDbRepository dynamoRepository
+      DynamoDbManager dynamoRepository
   ) {
     this.dynamoRepository = dynamoRepository;
     this.dynamoDbLocalPort = port;

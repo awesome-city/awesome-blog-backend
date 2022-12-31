@@ -6,14 +6,13 @@ import com.github.awesome_city.blog.api.domain.common.PagingEntity;
 import com.github.awesome_city.blog.api.domain.entity.Article;
 import com.github.awesome_city.blog.api.domain.entity.Article.Status;
 import com.github.awesome_city.blog.api.domain.repository.ArticleRepository;
-import com.github.awesome_city.blog.api.infrastructure.db.dynamodb.common.DynamoDbConfiguration;
+import com.github.awesome_city.blog.api.infrastructure.db.dynamodb.common.DynamoDbManager;
 import com.github.awesome_city.blog.api.infrastructure.db.dynamodb.entity.article.ArticleAuthorRelation;
 import com.github.awesome_city.blog.api.infrastructure.db.dynamodb.entity.article.ArticleIdRelation;
 import com.github.awesome_city.blog.api.infrastructure.db.dynamodb.entity.article.ArticleNameRelation;
 import com.github.awesome_city.blog.api.infrastructure.db.dynamodb.entity.article.ArticleObject;
 import com.github.awesome_city.blog.api.infrastructure.db.dynamodb.entity.article.ArticleTagRelation;
 import com.github.awesome_city.blog.api.util.CollectionUtils;
-import com.github.awesome_city.blog.api.util.JsonMapper;
 import com.github.awesome_city.blog.api.util.aspect.Log;
 import com.github.awesome_city.blog.api.util.id.IdGenerator;
 import io.micronaut.core.annotation.NonNull;
@@ -24,22 +23,21 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 @Singleton
-public class DynamoDbArticleRepository extends DynamoDbRepository implements
-    ArticleRepository {
+public class DynamoDbArticleRepository implements ArticleRepository {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamoDbArticleRepository.class);
+
+  private final DynamoDbManager manager;
+
   private final IdGenerator idGenerator;
 
   public DynamoDbArticleRepository(
-      DynamoDbConfiguration dynamoConfiguration,
-      DynamoDbClient dynamoDbClient,
-      JsonMapper jsonMapper,
+      DynamoDbManager manager,
       IdGenerator idGenerator
   ) {
-    super(dynamoConfiguration, dynamoDbClient, jsonMapper);
+    this.manager = manager;
     this.idGenerator = idGenerator;
   }
 
@@ -47,17 +45,17 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
   @Log
   public PagingEntity<Article> findAll(String site, Article.Status status, Integer limit,
       String nextPageToken) {
-    PagingEntity<ArticleObject> dynamoEntity = findAllItems(
-        ArticleObject.of(new Article.Builder().site(site).status(status).build()),
+    PagingEntity<ArticleObject> dynamoEntities = manager.findAllItems(
+        ArticleObject.of(Article.builder().site(site).status(status).build()),
         limit,
         nextPageToken
     );
 
     return new PagingEntity<>(
-        dynamoEntity.getList().stream()
+        dynamoEntities.getList().stream()
             .map(e -> (Article) e)
             .collect(Collectors.toList()),
-        dynamoEntity.getNextPageToken()
+        dynamoEntities.getNextPageToken()
     );
   }
 
@@ -68,11 +66,11 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
       @NonNull String id
   ) {
     LOGGER.debug("find article by id [id = " + id + "]");
-    Optional<ArticleIdRelation> idRelation = findItem(new ArticleIdRelation(site, id));
+    Optional<ArticleIdRelation> idRelation = manager.findItem(new ArticleIdRelation(site, id));
 
     Optional<ArticleObject> object = idRelation
-        .flatMap(r -> findItem(ArticleObject.of(
-            new Article.Builder()
+        .flatMap(r -> manager.findItem(ArticleObject.of(
+            Article.builder()
                 .site(r.getSite())
                 .status(r.getStatus())
                 .id(r.getId())
@@ -92,7 +90,7 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
   public Optional<Article> findByName(String site, String name) {
     LOGGER.debug("find article by name [name = " + name + "]");
     ArticleNameRelation articleNameRelation = new ArticleNameRelation(site, name);
-    Optional<ArticleNameRelation> relation = findItem(articleNameRelation);
+    Optional<ArticleNameRelation> relation = manager.findItem(articleNameRelation);
     if (relation.isPresent()) {
       ArticleNameRelation r = relation.get();
       LOGGER.info("relation found [id = " + r.getId() + "]");
@@ -114,10 +112,10 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
   ) {
     LOGGER.debug("find articles by tag [tag = " + tagId + "]");
     ArticleTagRelation articleTagRelation = new ArticleTagRelation(site, status, tagId);
-    PagingEntity<ArticleTagRelation> tagEntities = findAllItems(articleTagRelation, limit,
+    PagingEntity<ArticleTagRelation> tagEntities = manager.findAllItems(articleTagRelation, limit,
         nextPageToken);
 
-    List<ArticleObject> result = this.findManyItems(
+    List<ArticleObject> result = manager.findManyItems(
         tagEntities.getList().stream().map(ArticleTagRelation::toArticle).toList());
 
     return new PagingEntity<>(
@@ -141,13 +139,13 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
         status,
         authorId
     );
-    PagingEntity<ArticleAuthorRelation> authorEntities = findAllItems(
+    PagingEntity<ArticleAuthorRelation> authorEntities = manager.findAllItems(
         articleAuthorRelation,
         limit,
         nextPageToken
     );
 
-    List<ArticleObject> result = this.findManyItems(
+    List<ArticleObject> result = manager.findManyItems(
         authorEntities.getList().stream()
             .map(ArticleAuthorRelation::toArticle)
             .toList()
@@ -162,7 +160,7 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
   @Override
   public Article create(Article article) {
     // 同じnameで他の記事が存在している場合はエラー
-    if (!this.isUniqueName(article)) {
+    if (this.existName(article)) {
       throw new ResourceConflictException("article name is already used by another article.");
     }
 
@@ -170,21 +168,21 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
     ArticleObject object = ArticleObject.of(article);
     object.setId(idGenerator.generate());
     LOGGER.info("create article entity [ id = " + object.getId() + "]");
-    putItem(object);
+    manager.putItem(object);
 
     // Relation - id
-    putItem(new ArticleIdRelation(object));
+    manager.putItem(new ArticleIdRelation(object));
 
     // Relation - name
-    putItem(new ArticleNameRelation(object));
+    manager.putItem(new ArticleNameRelation(object));
 
     // Relation - tag
     for (ArticleTagRelation tagRelation : ArticleTagRelation.of(object)) {
-      putItem(tagRelation);
+      manager.putItem(tagRelation);
     }
 
     // Relation - author
-    putItem(new ArticleAuthorRelation(object));
+    manager.putItem(new ArticleAuthorRelation(object));
 
     return object;
   }
@@ -204,38 +202,38 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
     assert old != null;
 
     // 同じnameで他の記事が存在している場合はエラー
-    if (!this.isUniqueName(article)) {
+    if (this.existName(article)) {
       throw new ResourceConflictException("article name is already used by another article.");
     }
 
     // Object
     ArticleObject object = ArticleObject.of(article);
     LOGGER.info("update article entity [ id = " + object.getId() + "]");
-    updateItem(object);
+    manager.updateItem(object);
 
     // Relation - name
     // 名前が変わっていたら削除＆作成
     if (!article.getName().equals(old.getName())) {
-      deleteItem(new ArticleNameRelation(old));
-      putItem(new ArticleNameRelation(object));
+      manager.deleteItem(new ArticleNameRelation(old));
+      manager.putItem(new ArticleNameRelation(object));
     }
 
     // Relation - tag
     for (String oldTag : CollectionUtils.differenceSet(old.getTags(), article.getTags())) {
-      deleteItem(
+      manager.deleteItem(
           new ArticleTagRelation(old.getSite(), old.getStatus(), oldTag, old.getId()));
     }
 
     for (String newTag : CollectionUtils.differenceSet(article.getTags(), old.getTags())) {
-      putItem(
+      manager.putItem(
           new ArticleTagRelation(object.getSite(), object.getStatus(), newTag, object.getId()));
     }
 
     // Relation - author
     // Authorが変わっていたら削除＆作成
     if (old.getAuthorId() != null && !old.getAuthorId().equals(object.getAuthorId())) {
-      deleteItem(new ArticleAuthorRelation(old));
-      putItem(new ArticleAuthorRelation(object));
+      manager.deleteItem(new ArticleAuthorRelation(old));
+      manager.putItem(new ArticleAuthorRelation(object));
     }
 
     return object;
@@ -245,30 +243,30 @@ public class DynamoDbArticleRepository extends DynamoDbRepository implements
   public void delete(String site, String id) {
     Consumer<ArticleObject> deleteRelations = (article) -> {
       // ArticleId
-      deleteItem(new ArticleIdRelation(article));
+      manager.deleteItem(new ArticleIdRelation(article));
 
       // ArticleName
-      deleteItem(new ArticleNameRelation(article));
+      manager.deleteItem(new ArticleNameRelation(article));
 
       // ArticleTag
       for (ArticleTagRelation tagRelation : ArticleTagRelation.of(article)) {
-        deleteItem(tagRelation);
+        manager.deleteItem(tagRelation);
       }
 
       // ArticleAuthor
-      deleteItem(new ArticleAuthorRelation(article));
+      manager.deleteItem(new ArticleAuthorRelation(article));
     };
 
     this.findById(site, id)
         .ifPresent(
-            article -> deleteItem(ArticleObject.of(
-                new Article.Builder().site(site).status(Status.PUBLISHED).id(id).build()
+            article -> manager.deleteItem(ArticleObject.of(
+                Article.builder().site(site).status(Status.PUBLISHED).id(id).build()
             ))
         );
   }
 
-  private boolean isUniqueName(Article article) {
-    return findItem(new ArticleNameRelation(article.getSite(), article.getName()))
+  private boolean existName(Article article) {
+    return manager.findItem(new ArticleNameRelation(article.getSite(), article.getName()))
         .map(r -> !r.getId().equals(article.getId()))
         .orElse(true);
   }

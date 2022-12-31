@@ -1,11 +1,9 @@
-package com.github.awesome_city.blog.api.infrastructure.db.dynamodb.repository;
+package com.github.awesome_city.blog.api.infrastructure.db.dynamodb.common;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.awesome_city.blog.api.domain.common.PagingEntity;
-import com.github.awesome_city.blog.api.infrastructure.db.dynamodb.common.DynamoDbConfiguration;
-import com.github.awesome_city.blog.api.infrastructure.db.dynamodb.common.DynamoDbTableType;
 import com.github.awesome_city.blog.api.infrastructure.db.dynamodb.entity.DynamoDbEntity;
 import com.github.awesome_city.blog.api.util.JsonMapper;
 import com.github.awesome_city.blog.api.util.aspect.Log;
@@ -52,18 +50,17 @@ import software.amazon.awssdk.services.dynamodb.model.ScalarAttributeType;
 @Requires(beans = {DynamoDbConfiguration.class, DynamoDbClient.class, JsonMapper.class})
 @Singleton
 @Primary
-public class DynamoDbRepository {
+public final class DynamoDbManager {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(DynamoDbRepository.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(DynamoDbManager.class);
 
-  protected final DynamoDbClient dynamoDbClient;
+  private final DynamoDbClient dynamoDbClient;
 
-  protected final DynamoDbEnhancedClient enhancedClient;
-  protected final DynamoDbConfiguration dynamoConfiguration;
+  private final DynamoDbEnhancedClient enhancedClient;
+  private final DynamoDbConfiguration dynamoConfiguration;
+  private final ObjectMapper mapper;
 
-  protected final ObjectMapper mapper;
-
-  public DynamoDbRepository(
+  public DynamoDbManager(
       DynamoDbConfiguration dynamoConfiguration,
       DynamoDbClient dynamoDbClient,
       JsonMapper jsonMapper
