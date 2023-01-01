@@ -7,19 +7,19 @@ import io.micronaut.core.annotation.NonNull;
 public interface DynamoDbEntity extends Identified {
 
   @NonNull
-  DynamoDbTableType getTableType();
+  DynamoDbTableType tableType();
 
   @NonNull
   String getHashKey();
 
-  void setHashKey(String hashKey);
-
   @NonNull
   String getRangeKey();
-
-  void setRangeKey(String rangeKey);
 
   default Integer getTtl() {
     return null;
   }
+
+  void setHashKey(String hashKey);
+
+  void setRangeKey(String rangeKey);
 }

@@ -1,59 +1,44 @@
-package com.github.awesome_city.blog.api.infrastructure.db.dynamodb.entity.article;
+package com.github.awesome_city.blog.api.infrastructure.db.dynamodb.entity.tag;
 
-import com.github.awesome_city.blog.api.domain.entity.Article;
+import com.github.awesome_city.blog.api.domain.entity.Tag;
 import com.github.awesome_city.blog.api.infrastructure.db.dynamodb.common.DynamoDbSupport;
 import com.github.awesome_city.blog.api.infrastructure.db.dynamodb.common.DynamoDbTableType;
 import com.github.awesome_city.blog.api.infrastructure.db.dynamodb.entity.DynamoDbEntity;
+import com.github.awesome_city.blog.api.util.micronaut.BeanUtil;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey;
 
 @DynamoDbBean
-@EqualsAndHashCode
-@ToString
 @Data
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 @NoArgsConstructor
-public class ArticleIdRelation implements DynamoDbEntity {
+public class TagObject extends Tag implements DynamoDbEntity {
 
-  private String site;
-  private String id;
+  private static final Logger LOGGER = LoggerFactory.getLogger(TagObject.class);
 
-  private Article.Status status;
-
-  public ArticleIdRelation(String site, String id) {
-    this.site = site;
-    this.id = id;
-  }
-
-  public ArticleIdRelation(Article object) {
-    this.site = object.getSite();
-    this.id = object.getId();
-    this.status = object.getStatus();
-  }
-
-  public ArticleObject toArticle() {
-    ArticleObject object = new ArticleObject();
-    object.setSite(site);
-    object.setStatus(status);
-    object.setId(id);
-    return object;
+  public TagObject(Tag tag) {
+    BeanUtil.copy(tag, this);
   }
 
   @Override
   public DynamoDbTableType tableType() {
-    return DynamoDbTableType.RELATION_TABLE;
+    return DynamoDbTableType.OBJECT_TABLE;
   }
 
   @Override
   @DynamoDbPartitionKey
   public String getHashKey() {
     return DynamoDbSupport.createHashKeyValue(
-        "Article-id",
-        "site", this.getSite()
+        "Tag",
+        "site", getSite()
     );
   }
 
@@ -61,7 +46,7 @@ public class ArticleIdRelation implements DynamoDbEntity {
   @DynamoDbSortKey
   public String getRangeKey() {
     return DynamoDbSupport.createRangeKeyValue(
-        "id", this.getId()
+        "id", getId()
     );
   }
 
@@ -74,5 +59,4 @@ public class ArticleIdRelation implements DynamoDbEntity {
   public void setRangeKey(String rangeKey) {
 
   }
-
 }

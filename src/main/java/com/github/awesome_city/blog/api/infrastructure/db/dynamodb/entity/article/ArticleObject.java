@@ -31,7 +31,7 @@ public class ArticleObject extends Article implements DynamoDbEntity {
   }
 
   @Override
-  public DynamoDbTableType getTableType() {
+  public DynamoDbTableType tableType() {
     return DynamoDbTableType.OBJECT_TABLE;
   }
 
