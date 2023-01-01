@@ -7,7 +7,7 @@ import io.micronaut.core.annotation.NonNull;
 public interface DynamoDbEntity extends Identified {
 
   @NonNull
-  DynamoDbTableType getTableType();
+  DynamoDbTableType tableType();
 
   @NonNull
   String getHashKey();

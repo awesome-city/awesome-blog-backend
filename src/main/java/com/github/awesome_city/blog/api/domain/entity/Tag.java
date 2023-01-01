@@ -1,27 +1,30 @@
 package com.github.awesome_city.blog.api.domain.entity;
 
 import com.github.awesome_city.blog.api.domain.common.Identified;
+import com.github.awesome_city.blog.api.domain.common.Validatable;
 import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.Nullable;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Pattern;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @Introspected
-public class Tag implements Identified {
+public class Tag extends Validatable implements Identified {
 
-  @NotBlank
+  @NotEmpty
   private String site;
 
-  @NotBlank
+  @Nullable
   private String id;
 
-  @NotBlank
+  @NotEmpty
   private String name;
 
-  @NotBlank
+  @NotEmpty
   @Pattern(regexp = "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
   private String color;
 
@@ -35,7 +38,7 @@ public class Tag implements Identified {
 
   @Override
   public String getId() {
-    return null;
+    return id;
   }
 
   public void setId(String id) {

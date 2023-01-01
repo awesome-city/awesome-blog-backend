@@ -1,24 +1,23 @@
 package com.github.awesome_city.blog.api.domain.entity;
 
 import com.github.awesome_city.blog.api.domain.common.Identified;
+import com.github.awesome_city.blog.api.domain.common.Validatable;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Set;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @Introspected
-public class Article implements Identified {
+public class Article extends Validatable implements Identified {
 
-  @NonNull
-  @NotBlank
+  @NotEmpty
   private String site;
 
   /**
@@ -30,15 +29,13 @@ public class Article implements Identified {
   /**
    * 記事識別名
    */
-  @NonNull
-  @NotBlank
+  @NotEmpty
   private String name;
 
   /**
    * タイトル
    */
-  @NonNull
-  @NotBlank
+  @NotEmpty
   private String title;
 
   /**
@@ -56,7 +53,7 @@ public class Article implements Identified {
   /**
    * 著者ID
    */
-  @NonNull
+  @NotEmpty
   private String authorId;
 
   /**

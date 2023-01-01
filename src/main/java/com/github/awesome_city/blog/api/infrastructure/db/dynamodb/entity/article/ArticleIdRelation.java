@@ -44,7 +44,7 @@ public class ArticleIdRelation implements DynamoDbEntity {
   }
 
   @Override
-  public DynamoDbTableType getTableType() {
+  public DynamoDbTableType tableType() {
     return DynamoDbTableType.RELATION_TABLE;
   }
 

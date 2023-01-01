@@ -55,7 +55,7 @@ public class ArticleAuthorRelation implements DynamoDbEntity {
   }
 
   @Override
-  public DynamoDbTableType getTableType() {
+  public DynamoDbTableType tableType() {
     return DynamoDbTableType.RELATION_TABLE;
   }
 

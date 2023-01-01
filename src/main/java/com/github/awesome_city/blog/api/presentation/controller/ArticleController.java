@@ -21,8 +21,6 @@ import io.micronaut.http.annotation.Status;
 import io.micronaut.validation.validator.Validator;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import javax.validation.ConstraintViolation;
 import javax.validation.constraints.NotBlank;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,17 +105,11 @@ public class ArticleController {
   ) {
     article.setSite(site);
 
-    var violations = validator.validate(article);
-    if (violations.size() != 0) {
-      throw new BadRequestException(
-          "article has some violations. [violations = "
-              + violations.stream()
-              .map(ConstraintViolation::getMessage)
-              .collect(Collectors.joining(","))
-              + "]"
-      );
+    if (article.validate(validator)) {
+      return repository.create(article);
+    } else {
+      throw new BadRequestException("article has violations");
     }
-    return repository.create(article);
   }
 
   @Get("/{id}")
@@ -142,18 +134,11 @@ public class ArticleController {
     article.setSite(site);
     article.setId(id);
 
-    var violations = validator.validate(article);
-    if (violations.size() != 0) {
-      throw new BadRequestException(
-          "article has some violations. [violations = "
-              + violations.stream()
-              .map(ConstraintViolation::getMessage)
-              .collect(Collectors.joining(","))
-              + "]"
-      );
+    if (article.validate(validator)) {
+      return repository.update(article);
+    } else {
+      throw new BadRequestException("article has violations");
     }
-
-    return repository.update(article);
   }
 
   @Delete("/{id}")

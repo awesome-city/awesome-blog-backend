@@ -29,7 +29,7 @@ public class TagObject extends Tag implements DynamoDbEntity {
   }
 
   @Override
-  public DynamoDbTableType getTableType() {
+  public DynamoDbTableType tableType() {
     return DynamoDbTableType.OBJECT_TABLE;
   }
 

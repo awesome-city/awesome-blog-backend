@@ -254,7 +254,7 @@ public class DynamoDbManager {
     Class<T> clazz = (Class<T>) tableSchema.getClass();
     TableSchema<T> schema = TableSchema.fromBean(clazz);
     return enhancedClient.table(
-        tableSchema.getTableType().getTableName(dynamoConfiguration),
+        tableSchema.tableType().getTableName(dynamoConfiguration),
         schema
     );
   }
