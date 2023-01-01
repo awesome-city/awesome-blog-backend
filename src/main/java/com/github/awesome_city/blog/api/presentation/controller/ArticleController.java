@@ -98,6 +98,7 @@ public class ArticleController {
   }
 
   @Post
+  @Status(HttpStatus.CREATED)
   @Log
   public Article createArticle(
       @Header("X-SITE-ID") String site,

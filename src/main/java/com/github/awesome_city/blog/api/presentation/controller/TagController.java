@@ -7,6 +7,7 @@ import com.github.awesome_city.blog.api.domain.entity.Tag;
 import com.github.awesome_city.blog.api.domain.repository.TagRepository;
 import com.github.awesome_city.blog.api.util.aspect.Log;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Delete;
@@ -16,6 +17,7 @@ import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.Put;
 import io.micronaut.http.annotation.QueryValue;
+import io.micronaut.http.annotation.Status;
 import io.micronaut.validation.validator.Validator;
 import java.util.Optional;
 import javax.validation.constraints.NotBlank;
@@ -49,6 +51,7 @@ public class TagController {
   }
 
   @Post
+  @Status(HttpStatus.CREATED)
   @Log
   public Tag createTag(
       @Header("X-SITE-ID") String site,
@@ -90,6 +93,7 @@ public class TagController {
   }
 
   @Delete("/{id}")
+  @Status(HttpStatus.NO_CONTENT)
   @Log
   public void delete(
       @Header("X-SITE-ID") String site,
