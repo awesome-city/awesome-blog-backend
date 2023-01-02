@@ -19,7 +19,7 @@ import io.micronaut.core.annotation.NonNull;
 import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -241,7 +241,7 @@ public class DynamoDbArticleRepository implements ArticleRepository {
 
   @Override
   public void delete(String site, String id) {
-    Consumer<ArticleObject> deleteRelations = (article) -> {
+    UnaryOperator<ArticleObject> deleteRelations = (article) -> {
       // ArticleId
       manager.deleteItem(new ArticleIdRelation(article));
 
@@ -255,14 +255,14 @@ public class DynamoDbArticleRepository implements ArticleRepository {
 
       // ArticleAuthor
       manager.deleteItem(new ArticleAuthorRelation(article));
+
+      return article;
     };
 
     this.findById(site, id)
-        .ifPresent(
-            article -> manager.deleteItem(ArticleObject.of(
-                Article.builder().site(site).status(Status.PUBLISHED).id(id).build()
-            ))
-        );
+        .map(ArticleObject::of)
+        .map(deleteRelations)
+        .ifPresent(manager::deleteItem);
   }
 
   private boolean existName(Article article) {
