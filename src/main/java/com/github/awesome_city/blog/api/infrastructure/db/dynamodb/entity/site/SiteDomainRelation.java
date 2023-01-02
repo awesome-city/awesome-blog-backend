@@ -22,8 +22,7 @@ public class SiteDomainRelation implements DynamoDbEntity {
   private String id;
   private String domain;
 
-  public SiteDomainRelation(String id, String domain) {
-    this.id = id;
+  public SiteDomainRelation(String domain) {
     this.domain = domain;
   }
 
