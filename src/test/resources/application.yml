@@ -1,6 +1,11 @@
 micronaut:
   application:
     name: awesomeBlogServer
+  security:
+    intercept-url-map:
+      - pattern: /**
+        access:
+          - isAnonymous()
 
 dynamodb:
   object-table-name: 'awesome-blog-dev-object-table'

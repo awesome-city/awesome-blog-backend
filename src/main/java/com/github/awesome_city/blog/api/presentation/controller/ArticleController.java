@@ -18,8 +18,9 @@ import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.Put;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.annotation.Status;
+import io.micronaut.security.annotation.Secured;
+import io.micronaut.security.rules.SecurityRule;
 import io.micronaut.validation.validator.Validator;
-import java.util.List;
 import java.util.Optional;
 import javax.validation.constraints.NotBlank;
 import org.slf4j.Logger;
@@ -51,11 +52,11 @@ public class ArticleController {
    * @return 記事一覧
    */
   @Get
+  @Secured(SecurityRule.IS_ANONYMOUS)
   @Log
   public PagingEntity<Article> getArticles(
       @Header("X-SITE-ID") String site,
       @QueryValue String status,
-      @QueryValue Optional<String> name,
       @QueryValue Optional<String> tag,
       @QueryValue Optional<String> author,
       @QueryValue Optional<Integer> limit,
@@ -64,12 +65,7 @@ public class ArticleController {
     Article.Status statusEnum = Article.Status.byName(status);
 
     PagingEntity<Article> result;
-    if (name.isPresent()) {
-      Optional<Article> findByNameResult = repository.findByName(site, name.get());
-      result = findByNameResult
-          .map(article -> new PagingEntity<>(List.of(article), null))
-          .orElse(null);
-    } else if (tag.isPresent()) {
+    if (tag.isPresent()) {
       result = repository.findByTag(
           site,
           statusEnum,
@@ -114,15 +110,14 @@ public class ArticleController {
   }
 
   @Get("/{id}")
+  @Secured(SecurityRule.IS_ANONYMOUS)
   @Log
   public Article getArticleById(
       @Header("X-SITE-ID") String site,
       @PathVariable @NonNull @NotBlank String id
   ) {
-    Optional<Article> optional = repository.findById(site, id);
-
-    return optional.orElseThrow(
-        () -> new ResourceNotFoundException("article not found"));
+    return repository.findById(site, id)
+        .orElseThrow(() -> new ResourceNotFoundException("article not found"));
   }
 
   @Put("/{id}")
@@ -150,5 +145,16 @@ public class ArticleController {
       @PathVariable @NonNull @NotBlank String id
   ) {
     repository.delete(site, id);
+  }
+
+  @Get("/find-by-name/{name}")
+  @Secured(SecurityRule.IS_ANONYMOUS)
+  @Log
+  public Article findByName(
+      @Header("X-SITE-ID") String site,
+      @PathVariable @NotBlank String name
+  ) {
+    return repository.findByName(site, name)
+        .orElseThrow(() -> new ResourceNotFoundException("article not found"));
   }
 }

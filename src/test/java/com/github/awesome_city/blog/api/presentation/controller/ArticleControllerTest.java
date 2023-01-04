@@ -58,10 +58,8 @@ class ArticleControllerTest {
   void test_getArticles_name() {
     AwsProxyRequest request = new AwsProxyRequestBuilder()
         .method("GET")
-        .path("/articles")
+        .path("/articles/find-by-name/name1")
         .header("X-SITE-ID", "site1")
-        .queryString("status", "published")
-        .queryString("name", "name1")
         .build();
     AwsProxyResponse response = handler.handleRequest(request, lambdaContext);
     assertEquals(200, response.getStatusCode());
