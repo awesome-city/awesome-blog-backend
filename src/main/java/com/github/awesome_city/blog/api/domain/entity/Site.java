@@ -22,6 +22,9 @@ public class Site extends Validatable implements Identified {
   private String domain;
 
   @NotEmpty
+  private String owner;
+
+  @NotEmpty
   private String title;
 
   private String subTitle;
@@ -43,6 +46,14 @@ public class Site extends Validatable implements Identified {
 
   public void setDomain(String domain) {
     this.domain = domain;
+  }
+
+  public String getOwner() {
+    return owner;
+  }
+
+  public void setOwner(String owner) {
+    this.owner = owner;
   }
 
   public String getTitle() {
@@ -80,12 +91,15 @@ public class Site extends Validatable implements Identified {
 
     private String domain;
 
+    private String owner;
+
     private String title;
 
     public Site build() {
       Site site = new Site();
       site.id = this.id;
       site.domain = this.domain;
+      site.owner = owner;
       site.title = this.title;
       return site;
     }
@@ -97,6 +111,11 @@ public class Site extends Validatable implements Identified {
 
     public Builder domain(String domain) {
       this.domain = domain;
+      return this;
+    }
+
+    public Builder owner(String owner) {
+      this.owner = owner;
       return this;
     }
 

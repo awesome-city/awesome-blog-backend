@@ -8,12 +8,16 @@ import com.github.awesome_city.blog.api.domain.repository.SiteRepository;
 import com.github.awesome_city.blog.api.infrastructure.db.dynamodb.common.DynamoDbManager;
 import com.github.awesome_city.blog.api.infrastructure.db.dynamodb.entity.site.SiteDomainRelation;
 import com.github.awesome_city.blog.api.infrastructure.db.dynamodb.entity.site.SiteObject;
+import com.github.awesome_city.blog.api.infrastructure.db.dynamodb.entity.site.SiteOwnerRelation;
 import com.github.awesome_city.blog.api.util.aspect.Log;
 import com.github.awesome_city.blog.api.util.id.IdGenerator;
 import jakarta.inject.Singleton;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
+import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,9 +53,25 @@ public class DynamoDbSiteRepository implements SiteRepository {
   }
 
   @Override
+  public PagingEntity<Site> findByUser(String userId, Integer limit, String nextPageToken) {
+    LOGGER.debug("find site list by owner [owner = " + userId + "]");
+    PagingEntity<SiteOwnerRelation> relationPagingEntity = manager.findAllItems(
+        new SiteOwnerRelation(userId), limit, nextPageToken
+    );
+
+    List<Site> result = new ArrayList<>(manager.findManyItems(
+        relationPagingEntity.getList().stream()
+            .map(SiteOwnerRelation::toSite)
+            .toList()
+    ));
+
+    return new PagingEntity<>(result, relationPagingEntity.getNextPageToken());
+  }
+
+  @Override
   @Log
   public Optional<Site> findById(String id) {
-    LOGGER.debug("find site by id [id = " + id + "]");
+    LOGGER.info("find site by id [id = " + id + "]");
     return manager.findItem(
         new SiteObject(Site.builder().id(id).build())
     ).map(e -> e);
@@ -60,7 +80,7 @@ public class DynamoDbSiteRepository implements SiteRepository {
   @Override
   @Log
   public Optional<Site> findByDomain(String domain) {
-    LOGGER.debug("find site by domain [domain = " + domain + "]");
+    LOGGER.info("find site by domain [domain = " + domain + "]");
     return manager.findItem(new SiteDomainRelation(domain))
         .map(relation -> new SiteObject(
             Site.builder()
@@ -73,7 +93,7 @@ public class DynamoDbSiteRepository implements SiteRepository {
 
   @Override
   @Log
-  public Site create(Site site) {
+  public Site create(@Valid Site site) {
     // 同じdomainで他にサイトが存在している場合はエラー
     if (this.existDomain(site)) {
       throw new ResourceConflictException("domain is already used by another site.");
@@ -88,11 +108,14 @@ public class DynamoDbSiteRepository implements SiteRepository {
     // Relation - domain
     manager.putItem(new SiteDomainRelation(object));
 
+    // Relation - owner
+    manager.putItem(new SiteOwnerRelation(object));
+
     return object;
   }
 
   @Override
-  public Site update(Site site) {
+  public Site update(@Valid Site site) {
     if (site.getId() == null) {
       throw new IllegalArgumentException();
     }
@@ -115,6 +138,12 @@ public class DynamoDbSiteRepository implements SiteRepository {
       manager.putItem(new SiteDomainRelation(site));
     }
 
+    // Relation - owner
+    if (!site.getOwner().equals(old.getOwner())) {
+      manager.deleteItem(new SiteOwnerRelation(old));
+      manager.putItem(new SiteOwnerRelation(site));
+    }
+
     return site;
   }
 
@@ -122,6 +151,7 @@ public class DynamoDbSiteRepository implements SiteRepository {
   public void delete(String id) {
     UnaryOperator<SiteObject> deleteRelations = (site) -> {
       manager.deleteItem(new SiteDomainRelation(site));
+      manager.deleteItem(new SiteOwnerRelation(site));
       return site;
     };
 

@@ -17,18 +17,25 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortK
 @ToString
 @Data
 @NoArgsConstructor
-public class SiteDomainRelation implements DynamoDbEntity {
+public class SiteOwnerRelation implements DynamoDbEntity {
 
   private String id;
-  private String domain;
+  private String owner;
 
-  public SiteDomainRelation(String domain) {
-    this.domain = domain;
+  public SiteOwnerRelation(String owner) {
+    this.owner = owner;
   }
 
-  public SiteDomainRelation(Site object) {
+  public SiteOwnerRelation(Site object) {
     this.id = object.getId();
-    this.domain = object.getDomain();
+    this.owner = object.getOwner();
+  }
+
+  public SiteObject toSite() {
+    SiteObject object = new SiteObject();
+    object.setId(id);
+    object.setOwner(owner);
+    return object;
   }
 
 
@@ -40,13 +47,16 @@ public class SiteDomainRelation implements DynamoDbEntity {
   @Override
   @DynamoDbPartitionKey
   public String getHashKey() {
-    return DynamoDbSupport.createHashKeyValue("Site-domain");
+    return DynamoDbSupport.createHashKeyValue(
+        "Site-owner",
+        "owner", getOwner()
+    );
   }
 
   @Override
   @DynamoDbSortKey
   public String getRangeKey() {
-    return DynamoDbSupport.createRangeKeyValue("domain", getDomain());
+    return DynamoDbSupport.createRangeKeyValue("id", getId());
   }
 
   @Override

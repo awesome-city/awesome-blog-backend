@@ -134,13 +134,13 @@ public class DynamoDbArticleRepository implements ArticleRepository {
       String nextPageToken
   ) {
     LOGGER.debug("find articles by author [author = " + authorId + "]");
-    ArticleAuthorRelation articleAuthorRelation = new ArticleAuthorRelation(
+    ArticleAuthorRelation query = new ArticleAuthorRelation(
         site,
         status,
         authorId
     );
     PagingEntity<ArticleAuthorRelation> authorEntities = manager.findAllItems(
-        articleAuthorRelation,
+        query,
         limit,
         nextPageToken
     );
